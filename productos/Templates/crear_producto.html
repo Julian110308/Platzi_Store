@@ -1,20 +1,455 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Crear Producto</title>
-</head>
-<body>
-    <h1>Crear un Nuevo Producto</h1>
+{% extends 'base.html' %}
 
-    {% if message %}
-        <p style="color: blue;">{{ message }}</p>
-    {% endif %}
+{% block title %}Crear Producto - Platzi Fake Store{% endblock %}
+
+{% block content %}
+<div class="hero" style="padding: 2rem 0;">
+    <h1 class="hero-title" style="font-size: 2.5rem;">Crear Nuevo Producto</h1>
+    <p class="hero-subtitle">Agrega un producto increíble a nuestra tienda y compártelo con el mundo</p>
+</div>
+
+{% if message %}
+    <div class="message message-success" style="margin-bottom: 2rem;">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+        </svg>
+        {{ message }}
+    </div>
+{% endif %}
+
+<div class="grid grid-2" style="align-items: start;">
+    <!-- Formulario de creación -->
+    <div class="card">
+        <h2 style="color: var(--gray-800); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Información del Producto
+        </h2>
+        
+        <form method="post" id="product-form" onsubmit="showCreatingState()">
+            {% csrf_token %}
+            
+            <!-- Título -->
+            <div class="form-group">
+                <label class="form-label">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h8c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-5 7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm2 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm2 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+                    </svg>
+                    Título del Producto *
+                </label>
+                {% for field in form %}
+                    {% if field.name == 'title' %}
+                        <input type="text" name="{{ field.name }}" class="form-input" 
+                               id="id_title" placeholder="Ej: iPhone 14 Pro Max"
+                               value="{{ field.value|default:'' }}">
+                    {% endif %}
+                {% endfor %}
+                <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">Un nombre atractivo y descriptivo para tu producto</small>
+            </div>
+
+            <!-- Precio -->
+            <div class="form-group">
+                <label class="form-label">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                    </svg>
+                    Precio *
+                </label>
+                {% for field in form %}
+                    {% if field.name == 'price' %}
+                        <input type="number" step="0.01" name="{{ field.name }}" class="form-input"
+                               id="id_price" placeholder="29.99"
+                               value="{{ field.value|default:'' }}">
+                    {% endif %}
+                {% endfor %}
+                <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">Precio en dólares (ej: 29.99)</small>
+            </div>
+
+            <!-- Descripción -->
+            <div class="form-group">
+                <label class="form-label">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                    Descripción *
+                </label>
+                {% for field in form %}
+                    {% if field.name == 'description' %}
+                        <textarea name="{{ field.name }}" class="form-input" id="id_description" 
+                                  rows="4" placeholder="Describe las características y beneficios de tu producto...">{{ field.value|default:'' }}</textarea>
+                    {% endif %}
+                {% endfor %}
+                <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">Describe las características y beneficios de tu producto</small>
+            </div>
+
+            <!-- Imagen -->
+            <div class="form-group">
+                <label class="form-label">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                    </svg>
+                    URL de la Imagen *
+                </label>
+                {% for field in form %}
+                    {% if field.name == 'image' %}
+                        <input type="url" name="{{ field.name }}" class="form-input"
+                               id="id_image" placeholder="https://ejemplo.com/imagen.jpg"
+                               value="{{ field.value|default:'' }}">
+                    {% endif %}
+                {% endfor %}
+                <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">URL de una imagen de alta calidad de tu producto</small>
+            </div>
+
+            <!-- Categoría -->
+            <div class="form-group">
+                <label class="form-label">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    Categoría *
+                </label>
+                {% for field in form %}
+                    {% if field.name == 'category' %}
+                        <select name="{{ field.name }}" class="form-input" id="id_category">
+                            <option value="">Selecciona una categoría</option>
+                            <option value="electronics">Electrónicos</option>
+                            <option value="jewelery">Joyería</option>
+                            <option value="men's clothing">Ropa de Hombre</option>
+                            <option value="women's clothing">Ropa de Mujer</option>
+                        </select>
+                    {% endif %}
+                {% endfor %}
+                <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">Selecciona la categoría que mejor describa tu producto</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; margin-top: 1rem;">
+                <span id="create-text">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    Crear Producto
+                </span>
+                <div id="create-loading" class="loading" style="display: none; margin: 0 auto;"></div>
+            </button>
+        </form>
+    </div>
+
+    <!-- Vista previa del producto -->
+    <div class="card">
+        <h2 style="color: var(--gray-800); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+            </svg>
+            Vista Previa
+        </h2>
+        
+        <div id="preview-card" class="card" style="background: var(--gray-50); border: 2px dashed var(--gray-300);">
+            <div id="preview-image" style="height: 200px; background: var(--gray-200); border-radius: var(--border-radius); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; color: var(--gray-500);">
+                <div style="text-align: center;">
+                    <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                    </svg>
+                    <p style="margin-top: 0.5rem;">Imagen del producto</p>
+                </div>
+            </div>
+            <h3 id="preview-title" style="color: var(--gray-800); margin-bottom: 0.5rem;">Título del producto</h3>
+            <p id="preview-price" style="color: var(--primary-color); font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;">$0.00</p>
+            <p id="preview-description" style="color: var(--gray-600); margin-bottom: 1rem;">Descripción del producto...</p>
+            <div id="preview-category" style="display: inline-block; background: var(--gray-200); color: var(--gray-700); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.9rem;">Sin categoría</div>
+        </div>
+        
+        <!-- Consejos para crear un buen producto -->
+        <div style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(245, 158, 11, 0.05)); border-radius: var(--border-radius); border-left: 4px solid var(--primary-color);">
+            <h3 style="color: var(--primary-color); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                Consejos para un producto exitoso
+            </h3>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li style="margin-bottom: 0.5rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <svg width="16" height="16" fill="var(--success-color)" viewBox="0 0 24 24" style="margin-top: 0.25rem; flex-shrink: 0;">
+                        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                    </svg>
+                    <span style="color: var(--gray-700);">Usa un título claro y atractivo</span>
+                </li>
+                <li style="margin-bottom: 0.5rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <svg width="16" height="16" fill="var(--success-color)" viewBox="0 0 24 24" style="margin-top: 0.25rem; flex-shrink: 0;">
+                        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                    </svg>
+                    <span style="color: var(--gray-700);">Establece un precio competitivo</span>
+                </li>
+                <li style="margin-bottom: 0.5rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <svg width="16" height="16" fill="var(--success-color)" viewBox="0 0 24 24" style="margin-top: 0.25rem; flex-shrink: 0;">
+                        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                    </svg>
+                    <span style="color: var(--gray-700);">Describe beneficios, no solo características</span>
+                </li>
+                <li style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <svg width="16" height="16" fill="var(--success-color)" viewBox="0 0 24 24" style="margin-top: 0.25rem; flex-shrink: 0;">
+                        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                    </svg>
+                    <span style="color: var(--gray-700);">Usa imágenes de alta calidad</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Productos de ejemplo/inspiración -->
+<div class="card" style="margin-top: 2rem;">
+    <h3 style="color: var(--gray-800); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        Ejemplos de Productos Populares
+    </h3>
     
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Crear Producto</button>
-    </form>
-</body>
-</html>
+    <div class="grid grid-3">
+        <div class="card" style="background: var(--gray-50); cursor: pointer;" onclick="fillExample('electronics')">
+            <div style="height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: var(--border-radius); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
+                    <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+                </svg>
+            </div>
+            <h4 style="color: var(--gray-800); margin-bottom: 0.5rem;">Auriculares Premium</h4>
+            <p style="color: var(--gray-600); font-size: 0.9rem;">Electrónicos - $129.99</p>
+            <small style="color: var(--primary-color);">Click para usar como ejemplo</small>
+        </div>
+        
+        <div class="card" style="background: var(--gray-50); cursor: pointer;" onclick="fillExample('fashion')">
+            <div style="height: 120px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: var(--border-radius); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+            </div>
+            <h4 style="color: var(--gray-800); margin-bottom: 0.5rem;">Camiseta Vintage</h4>
+            <p style="color: var(--gray-600); font-size: 0.9rem;">Ropa - $24.99</p>
+            <small style="color: var(--primary-color);">Click para usar como ejemplo</small>
+        </div>
+        
+        <div class="card" style="background: var(--gray-50); cursor: pointer;" onclick="fillExample('home')">
+            <div style="height: 120px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: var(--border-radius); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+            </div>
+            <h4 style="color: var(--gray-800); margin-bottom: 0.5rem;">Lámpara Moderna</h4>
+            <p style="color: var(--gray-600); font-size: 0.9rem;">Hogar - $89.99</p>
+            <small style="color: var(--primary-color);">Click para usar como ejemplo</small>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Referencias a los elementos del formulario
+    const titleInput = document.getElementById('id_title');
+    const priceInput = document.getElementById('id_price');
+    const descriptionInput = document.getElementById('id_description');
+    const imageInput = document.getElementById('id_image');
+    const categoryInput = document.getElementById('id_category');
+
+    // Referencias a los elementos de vista previa
+    const previewTitle = document.getElementById('preview-title');
+    const previewPrice = document.getElementById('preview-price');
+    const previewDescription = document.getElementById('preview-description');
+    const previewImage = document.getElementById('preview-image');
+    const previewCategory = document.getElementById('preview-category');
+
+    // Actualizar vista previa en tiempo real
+    function updatePreview() {
+        const title = titleInput.value || 'Título del producto';
+        const price = priceInput.value ? `${parseFloat(priceInput.value).toFixed(2)}` : '$0.00';
+        const description = descriptionInput.value || 'Descripción del producto...';
+        const imageUrl = imageInput.value;
+        const category = categoryInput.options[categoryInput.selectedIndex]?.text || 'Sin categoría';
+
+        previewTitle.textContent = title;
+        previewPrice.textContent = price;
+        previewDescription.textContent = description;
+        previewCategory.textContent = category;
+
+        // Actualizar imagen
+        if (imageUrl && isValidUrl(imageUrl)) {
+            previewImage.innerHTML = `<img src="${imageUrl}" alt="${title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--border-radius);" onerror="this.parentElement.innerHTML='<div style=\\'text-align: center; color: var(--error-color);\\'>Error al cargar la imagen</div>'">`;
+        } else {
+            previewImage.innerHTML = `
+                <div style="text-align: center;">
+                    <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                    </svg>
+                    <p style="margin-top: 0.5rem;">Imagen del producto</p>
+                </div>
+            `;
+        }
+    }
+
+    // Validar URL
+    function isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    // Event listeners para actualizar la vista previa
+    if (titleInput) titleInput.addEventListener('input', updatePreview);
+    if (priceInput) priceInput.addEventListener('input', updatePreview);
+    if (descriptionInput) descriptionInput.addEventListener('input', updatePreview);
+    if (imageInput) imageInput.addEventListener('input', updatePreview);
+    if (categoryInput) categoryInput.addEventListener('change', updatePreview);
+
+    // Función para llenar ejemplos
+    function fillExample(type) {
+        const examples = {
+            electronics: {
+                title: 'Auriculares Inalámbricos Premium',
+                price: '129.99',
+                description: 'Experimenta la libertad del sonido sin cables con nuestros auriculares premium. Calidad de sonido excepcional, cancelación activa de ruido y hasta 30 horas de batería. Perfectos para trabajo, viajes y entretenimiento.',
+                image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop',
+                category: 'electronics'
+            },
+            fashion: {
+                title: 'Camiseta Vintage Edición Limitada',
+                price: '24.99',
+                description: 'Camiseta de algodón 100% orgánico con diseño vintage único. Corte cómodo y relajado, perfecta para el uso diario. Disponible en varios colores y tallas. Edición limitada con estampado exclusivo.',
+                image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
+                category: "men's clothing"
+            },
+            home: {
+                title: 'Lámpara de Mesa Moderna LED',
+                price: '89.99',
+                description: 'Ilumina tu espacio con estilo moderno y funcionalidad inteligente. LED ajustable con control táctil, múltiples niveles de intensidad y diseño minimalista. Perfecta para oficina o dormitorio.',
+                image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=500&fit=crop',
+                category: 'electronics'
+            }
+        };
+
+        const example = examples[type];
+        if (example) {
+            titleInput.value = example.title;
+            priceInput.value = example.price;
+            descriptionInput.value = example.description;
+            imageInput.value = example.image;
+            
+            // Seleccionar categoría
+            for (let i = 0; i < categoryInput.options.length; i++) {
+                if (categoryInput.options[i].value === example.category) {
+                    categoryInput.selectedIndex = i;
+                    break;
+                }
+            }
+            
+            updatePreview();
+            showMessage('Ejemplo cargado correctamente', 'success');
+        }
+    }
+
+    function showCreatingState() {
+        document.getElementById('create-text').style.display = 'none';
+        document.getElementById('create-loading').style.display = 'inline-block';
+    }
+
+    function showMessage(text, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message message-${type}`;
+        messageDiv.style.position = 'fixed';
+        messageDiv.style.top = '20px';
+        messageDiv.style.right = '20px';
+        messageDiv.style.zIndex = '9999';
+        messageDiv.style.minWidth = '300px';
+        messageDiv.innerHTML = `
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+            </svg>
+            ${text}
+        `;
+        
+        document.body.appendChild(messageDiv);
+        
+        setTimeout(() => {
+            messageDiv.style.opacity = '0';
+            messageDiv.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(messageDiv)) {
+                    document.body.removeChild(messageDiv);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // Validación del formulario
+    document.getElementById('product-form').addEventListener('submit', function(e) {
+        const title = titleInput.value.trim();
+        const price = priceInput.value.trim();
+        const description = descriptionInput.value.trim();
+        const image = imageInput.value.trim();
+
+        if (!title || !price || !description || !image) {
+            e.preventDefault();
+            showMessage('Por favor completa todos los campos obligatorios', 'error');
+            return;
+        }
+
+        if (isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+            e.preventDefault();
+            showMessage('El precio debe ser un número válido mayor a 0', 'error');
+            return;
+        }
+
+        if (!isValidUrl(image)) {
+            e.preventDefault();
+            showMessage('Por favor ingresa una URL de imagen válida', 'error');
+            return;
+        }
+    });
+
+    // Inicializar vista previa
+    document.addEventListener('DOMContentLoaded', function() {
+        updatePreview();
+        
+        // Auto-focus en el primer campo
+        if (titleInput) {
+            titleInput.focus();
+        }
+    });
+</script>
+
+<style>
+    /* Estilos específicos para los campos del formulario */
+    .form-input {
+        width: 100% !important;
+        padding: 0.75rem 1rem !important;
+        border: 2px solid var(--gray-300) !important;
+        border-radius: var(--border-radius) !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        background: var(--white) !important;
+    }
+
+    .form-input:focus {
+        outline: none !important;
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+        background: rgba(37, 99, 235, 0.02) !important;
+    }
+
+    #id_description {
+        min-height: 120px !important;
+        resize: vertical !important;
+    }
+
+    /* Animaciones para las tarjetas de ejemplo */
+    .card[onclick] {
+        transition: all 0.3s ease;
+    }
+
+    .card[onclick]:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: var(--shadow-lg);
+    }
+</style>
+{% endblock %}

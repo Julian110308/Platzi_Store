@@ -1,32 +1,196 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Buscar Producto</title>
-</head>
-<body>
-    <h1>Buscar Producto por ID</h1>
+{% extends 'base.html' %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Buscar</button>
-    </form>
+{% block title %}Buscar Producto - Platzi Fake Store{% endblock %}
 
-    {% if product_data %}
-        <hr>
-        <h2>Resultados de la búsqueda</h2>
-        {% if product_data.error %}
-            <p>{{ product_data.error }}</p>
-        {% else %}
-            <h3>{{ product_data.title }}</h3>
-            <p><strong>ID:</strong> {{ product_data.id }}</p>
-            <p><strong>Precio:</strong> ${{ product_data.price }}</p>
-            <p><strong>Descripción:</strong> {{ product_data.description }}</p>
-            {% if product_data.images %}
-                <img src="{{ product_data.images.0 }}" alt="{{ product_data.title }}" width="300">
+{% block content %}
+<div class="hero" style="padding: 2rem 0;">
+    <h1 class="hero-title" style="font-size: 2.5rem;">Buscar Producto</h1>
+    <p class="hero-subtitle">Encuentra el producto perfecto utilizando su ID único</p>
+</div>
+
+<div class="grid grid-2" style="align-items: start;">
+    <!-- Formulario de búsqueda -->
+    <div class="card">
+        <h2 style="color: var(--gray-800); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            Buscar por ID
+        </h2>
+        
+        <form method="post" onsubmit="showLoading()">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.id.id_for_label }}" class="form-label">ID del Producto:</label>
+                <input type="number" name="{{ form.id.name }}" id="{{ form.id.id_for_label }}" 
+                       class="form-input" placeholder="Ej: 1, 5, 10..." 
+                       value="{{ form.id.value|default:'' }}">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <span id="search-text">Buscar Producto</span>
+                <div id="search-loading" class="loading" style="display: none;"></div>
+            </button>
+        </form>
+
+        <!-- Sugerencias de búsqueda -->
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--gray-200);">
+            <h3 style="color: var(--gray-700); margin-bottom: 1rem; font-size: 1rem;">Sugerencias de búsqueda:</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <button onclick="searchSuggestion(1)" class="btn" style="background: var(--gray-100); color: var(--gray-700); padding: 0.25rem 0.75rem; font-size: 0.9rem; border-radius: 20px;">ID: 1</button>
+                <button onclick="searchSuggestion(5)" class="btn" style="background: var(--gray-100); color: var(--gray-700); padding: 0.25rem 0.75rem; font-size: 0.9rem; border-radius: 20px;">ID: 5</button>
+                <button onclick="searchSuggestion(10)" class="btn" style="background: var(--gray-100); color: var(--gray-700); padding: 0.25rem 0.75rem; font-size: 0.9rem; border-radius: 20px;">ID: 10</button>
+                <button onclick="searchSuggestion(15)" class="btn" style="background: var(--gray-100); color: var(--gray-700); padding: 0.25rem 0.75rem; font-size: 0.9rem; border-radius: 20px;">ID: 15</button>
+                <button onclick="searchSuggestion(20)" class="btn" style="background: var(--gray-100); color: var(--gray-700); padding: 0.25rem 0.75rem; font-size: 0.9rem; border-radius: 20px;">ID: 20</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados de búsqueda -->
+    <div class="card" id="results-container">
+        {% if product_data %}
+            {% if product_data.error %}
+                <div class="message message-error">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                    {{ product_data.error }}
+                </div>
+            {% else %}
+                <div class="search-result">
+                    <h2 style="color: var(--success-color); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                        </svg>
+                        ¡Producto Encontrado!
+                    </h2>
+                    
+                    {% if product_data.images %}
+                        <div style="height: 300px; background: var(--gray-100); border-radius: var(--border-radius); margin-bottom: 2rem; overflow: hidden; position: relative;">
+                            <img src="{{ product_data.images.0 }}" alt="{{ product_data.title }}" 
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                            <div style="position: absolute; top: 15px; right: 15px; background: rgba(37, 99, 235, 0.9); color: white; padding: 0.5rem 1rem; border-radius: 25px; font-weight: 600;">
+                                ID: {{ product_data.id }}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <h3 style="color: var(--gray-800); font-size: 1.8rem; margin-bottom: 1rem;">{{ product_data.title }}</h3>
+                    
+                    <div style="display: grid; gap: 1rem; margin-bottom: 2rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 1rem; background: var(--gray-50); border-radius: var(--border-radius);">
+                            <svg width="20" height="20" fill="var(--success-color)" viewBox="0 0 24 24">
+                                <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                            </svg>
+                            <strong style="color: var(--gray-700);">Precio:</strong>
+                            <span style="font-size: 1.5rem; font-weight: 700; color: var(--success-color);">${{ product_data.price }}</span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: flex-start; gap: 0.5rem; padding: 1rem; background: var(--gray-50); border-radius: var(--border-radius);">
+                            <svg width="20" height="20" fill="var(--primary-color)" viewBox="0 0 24 24" style="margin-top: 0.25rem; flex-shrink: 0;">
+                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h8c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-5 7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm2 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm2 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+                            </svg>
+                            <div>
+                                <strong style="color: var(--gray-700);">Descripción:</strong>
+                                <p style="margin-top: 0.5rem; color: var(--gray-600); line-height: 1.6;">{{ product_data.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button onclick="addToCart({{ product_data.id }})" class="btn btn-primary" style="flex: 1;">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                                <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                            </svg>
+                            Agregar al Carrito
+                        </button>
+                        <button onclick="shareProduct({{ product_data.id }})" class="btn btn-secondary">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             {% endif %}
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1rem; color: var(--gray-500);">
+                <svg width="80" height="80" fill="currentColor" viewBox="0 0 24 24" style="margin-bottom: 1rem; opacity: 0.5;">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <h3 style="margin-bottom: 0.5rem;">Sin resultados</h3>
+                <p>Ingresa un ID para buscar productos en nuestra base de datos</p>
+            </div>
         {% endif %}
-    {% endif %}
-</body>
-</html>
+    </div>
+</div>
+
+<script>
+    function showLoading() {
+        document.getElementById('search-text').style.display = 'none';
+        document.getElementById('search-loading').style.display = 'inline-block';
+    }
+
+    function searchSuggestion(id) {
+        const inputField = document.querySelector('input[type="number"]');
+        inputField.value = id;
+        document.querySelector('form').submit();
+    }
+
+    function addToCart(productId) {
+        showMessage('Producto agregado al carrito correctamente', 'success');
+    }
+
+    function shareProduct(productId) {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Producto en Platzi Fake Store',
+                text: 'Mira este increíble producto que encontré',
+                url: window.location.href
+            });
+        } else {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                showMessage('Enlace copiado al portapapeles', 'info');
+            });
+        }
+    }
+
+    function showMessage(text, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message message-${type}`;
+        messageDiv.style.position = 'fixed';
+        messageDiv.style.top = '20px';
+        messageDiv.style.right = '20px';
+        messageDiv.style.zIndex = '9999';
+        messageDiv.style.minWidth = '300px';
+        messageDiv.innerHTML = `
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+            </svg>
+            ${text}
+        `;
+        
+        document.body.appendChild(messageDiv);
+        
+        setTimeout(() => {
+            messageDiv.style.opacity = '0';
+            messageDiv.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(messageDiv)) {
+                    document.body.removeChild(messageDiv);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // Auto-focus en el campo de búsqueda
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputField = document.querySelector('input[type="number"]');
+        if (inputField) {
+            inputField.focus();
+        }
+    });
+</script>
+{% endblock %}
