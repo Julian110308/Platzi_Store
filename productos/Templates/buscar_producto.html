@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Buscar Producto</title>
+</head>
+<body>
+    <h1>Buscar Producto por ID</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Buscar</button>
+    </form>
+
+    {% if product_data %}
+        <hr>
+        <h2>Resultados de la búsqueda</h2>
+        {% if product_data.error %}
+            <p>{{ product_data.error }}</p>
+        {% else %}
+            <h3>{{ product_data.title }}</h3>
+            <p><strong>ID:</strong> {{ product_data.id }}</p>
+            <p><strong>Precio:</strong> ${{ product_data.price }}</p>
+            <p><strong>Descripción:</strong> {{ product_data.description }}</p>
+            {% if product_data.images %}
+                <img src="{{ product_data.images.0 }}" alt="{{ product_data.title }}" width="300">
+            {% endif %}
+        {% endif %}
+    {% endif %}
+</body>
+</html>

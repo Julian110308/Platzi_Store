@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Platzi Fake Store - Inicio</title>
+</head>
+<body>
+    <nav>
+        <h2>Menú de Navegación</h2>
+        <ul>
+            <li><a href="{% url 'productos:inicio' %}">Inicio</a></li>
+            <li><a href="{% url 'productos:buscar_producto' %}">Buscar Producto</a></li>
+            <li><a href="{% url 'productos:crear_producto' %}">Crear Producto</a></li>
+        </ul>
+    </nav>
+    
+    <hr>
+
+    <h1>Todos los Productos</h1>
+    
+    {% if products %}
+        <ul>
+            {% for product in products %}
+                <li>
+                    <h3>{{ product.title }}</h3>
+                    <p><strong>Precio:</strong> ${{ product.price }}</p>
+                    <p><strong>Descripción:</strong> {{ product.description }}</p>
+                    {% if product.images %}
+                        <img src="{{ product.images.0 }}" alt="{{ product.title }}" width="200">
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No se pudieron cargar los productos o no hay productos disponibles.</p>
+    {% endif %}
+</body>
+</html>
