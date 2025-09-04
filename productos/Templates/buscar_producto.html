@@ -21,10 +21,10 @@
         <form method="post" onsubmit="showLoading()">
             {% csrf_token %}
             <div class="form-group">
-                <label for="{{ form.id.id_for_label }}" class="form-label">ID del Producto:</label>
-                <input type="number" name="{{ form.id.name }}" id="{{ form.id.id_for_label }}" 
+                <label for="{{ form.product_id.id_for_label }}" class="form-label">ID del Producto:</label>
+                <input type="number" name="{{ form.product_id.name }}" id="{{ form.product_id.id_for_label }}" 
                        class="form-input" placeholder="Ej: 1, 5, 10..." 
-                       value="{{ form.id.value|default:'' }}">
+                       value="{{ form.product_id.value|default:'' }}">
             </div>
             <button type="submit" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
@@ -133,7 +133,7 @@
     }
 
     function searchSuggestion(id) {
-        const inputField = document.querySelector('input[type="number"]');
+        const inputField = document.querySelector('input[name="product_id"]');
         inputField.value = id;
         document.querySelector('form').submit();
     }
@@ -154,7 +154,7 @@
             navigator.clipboard.writeText(url).then(() => {
                 showMessage('Enlace copiado al portapapeles', 'info');
             });
-        }
+        });
     }
 
     function showMessage(text, type) {
@@ -187,7 +187,7 @@
 
     // Auto-focus en el campo de búsqueda
     document.addEventListener('DOMContentLoaded', function() {
-        const inputField = document.querySelector('input[type="number"]');
+        const inputField = document.querySelector('input[name="product_id"]');
         if (inputField) {
             inputField.focus();
         }
