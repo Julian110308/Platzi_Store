@@ -1,11 +1,29 @@
 {% extends 'base.html' %}
 
-{% block title %}Crear Producto - Platzi Fake Store{% endblock %}
+{% block title %}
+    {% if edit_mode %}
+        Editar Producto - Platzi Fake Store
+    {% else %}
+        Crear Producto - Platzi Fake Store
+    {% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="hero" style="padding: 2rem 0;">
-    <h1 class="hero-title" style="font-size: 2.5rem;">Crear Nuevo Producto</h1>
-    <p class="hero-subtitle">Agrega un producto increíble a nuestra tienda y compártelo con el mundo</p>
+    <h1 class="hero-title" style="font-size: 2.5rem;">
+        {% if edit_mode %}
+            Editar Producto
+        {% else %}
+            Crear Nuevo Producto
+        {% endif %}
+    </h1>
+    <p class="hero-subtitle">
+        {% if edit_mode %}
+            Actualiza la información de tu producto y manténlo siempre actualizado
+        {% else %}
+            Agrega un producto increíble a nuestra tienda y compártelo con el mundo
+        {% endif %}
+    </p>
 </div>
 
 {% if message %}
@@ -18,16 +36,23 @@
 {% endif %}
 
 <div class="grid grid-2" style="align-items: start;">
-    <!-- Formulario de creación -->
+    <!-- Formulario de creación/edición -->
     <div class="card">
         <h2 style="color: var(--gray-800); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
-            Información del Producto
+            {% if edit_mode %}
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+                Actualizar Información del Producto
+            {% else %}
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Información del Producto
+            {% endif %}
         </h2>
         
-        <form method="post" id="product-form" onsubmit="showCreatingState()">
+        <form method="post" id="product-form" onsubmit="showProcessingState()">
             {% csrf_token %}
             
             <!-- Título -->
@@ -113,25 +138,45 @@
                     {% if field.name == 'category' %}
                         <select name="{{ field.name }}" class="form-input" id="id_category">
                             <option value="">Selecciona una categoría</option>
-                            <option value="electronics">Electrónicos</option>
-                            <option value="jewelery">Joyería</option>
-                            <option value="men's clothing">Ropa de Hombre</option>
-                            <option value="women's clothing">Ropa de Mujer</option>
+                            <option value="electronics" {% if field.value == 'electronics' %}selected{% endif %}>Electrónicos</option>
+                            <option value="jewelery" {% if field.value == 'jewelery' %}selected{% endif %}>Joyería</option>
+                            <option value="men's clothing" {% if field.value == "men's clothing" %}selected{% endif %}>Ropa de Hombre</option>
+                            <option value="women's clothing" {% if field.value == "women's clothing" %}selected{% endif %}>Ropa de Mujer</option>
                         </select>
                     {% endif %}
                 {% endfor %}
                 <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">Selecciona la categoría que mejor describa tu producto</small>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; margin-top: 1rem;">
-                <span id="create-text">
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                    </svg>
-                    Crear Producto
-                </span>
-                <div id="create-loading" class="loading" style="display: none; margin: 0 auto;"></div>
-            </button>
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                {% if edit_mode %}
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 1rem;">
+                        <span id="action-text">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                                <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                            </svg>
+                            Actualizar Producto
+                        </span>
+                        <div id="action-loading" class="loading" style="display: none; margin: 0 auto;"></div>
+                    </button>
+                    <a href="{% url 'productos:inicio' %}" class="btn btn-secondary" style="padding: 1rem; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center;">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        Cancelar
+                    </a>
+                {% else %}
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">
+                        <span id="action-text">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                            </svg>
+                            Crear Producto
+                        </span>
+                        <div id="action-loading" class="loading" style="display: none; margin: 0 auto;"></div>
+                    </button>
+                {% endif %}
+            </div>
         </form>
     </div>
 
@@ -160,6 +205,7 @@
         </div>
         
         <!-- Consejos para crear un buen producto -->
+        {% if not edit_mode %}
         <div style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(245, 158, 11, 0.05)); border-radius: var(--border-radius); border-left: 4px solid var(--primary-color);">
             <h3 style="color: var(--primary-color); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
@@ -194,10 +240,22 @@
                 </li>
             </ul>
         </div>
+        {% else %}
+        <div style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(37, 99, 235, 0.05)); border-radius: var(--border-radius); border-left: 4px solid var(--warning-color, #f59e0b);">
+            <h3 style="color: var(--warning-color, #f59e0b); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                Actualizando producto
+            </h3>
+            <p style="color: var(--gray-700); margin: 0;">Los cambios se guardarán automáticamente cuando presiones el botón "Actualizar Producto". Asegúrate de revisar todos los campos antes de confirmar.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Productos de ejemplo/inspiración -->
+<!-- Productos de ejemplo/inspiración - Solo mostrar en modo crear -->
+{% if not edit_mode %}
 <div class="card" style="margin-top: 2rem;">
     <h3 style="color: var(--gray-800); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;">
         <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
@@ -241,6 +299,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <script>
     // Referencias a los elementos del formulario
@@ -260,7 +319,7 @@
     // Actualizar vista previa en tiempo real
     function updatePreview() {
         const title = titleInput.value || 'Título del producto';
-        const price = priceInput.value ? `${parseFloat(priceInput.value).toFixed(2)}` : '$0.00';
+        const price = priceInput.value ? `$${parseFloat(priceInput.value).toFixed(2)}` : '$0.00';
         const description = descriptionInput.value || 'Descripción del producto...';
         const imageUrl = imageInput.value;
         const category = categoryInput.options[categoryInput.selectedIndex]?.text || 'Sin categoría';
@@ -302,7 +361,7 @@
     if (imageInput) imageInput.addEventListener('input', updatePreview);
     if (categoryInput) categoryInput.addEventListener('change', updatePreview);
 
-    // Función para llenar ejemplos
+    // Función para llenar ejemplos (solo disponible en modo crear)
     function fillExample(type) {
         const examples = {
             electronics: {
@@ -348,9 +407,9 @@
         }
     }
 
-    function showCreatingState() {
-        document.getElementById('create-text').style.display = 'none';
-        document.getElementById('create-loading').style.display = 'inline-block';
+    function showProcessingState() {
+        document.getElementById('action-text').style.display = 'none';
+        document.getElementById('action-loading').style.display = 'inline-block';
     }
 
     function showMessage(text, type) {
@@ -450,6 +509,81 @@
     .card[onclick]:hover {
         transform: translateY(-5px) scale(1.02);
         box-shadow: var(--shadow-lg);
+    }
+
+    /* Estilos para botón secundario */
+    .btn-secondary {
+        background: var(--gray-100) !important;
+        color: var(--gray-700) !important;
+        border: 2px solid var(--gray-300) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray-200) !important;
+        color: var(--gray-800) !important;
+        border-color: var(--gray-400) !important;
+        text-decoration: none !important;
+    }
+
+    /* Spinner de carga */
+    .loading {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--white);
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Mensajes de notificación */
+    .message {
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .message-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: rgb(5, 150, 105);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .message-error {
+        background: rgba(239, 68, 68, 0.1);
+        color: rgb(220, 38, 38);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Estilos responsivos */
+    @media (max-width: 768px) {
+        .grid-2 {
+            grid-template-columns: 1fr;
+        }
+        
+        .grid-3 {
+            grid-template-columns: 1fr;
+        }
+        
+        .hero-title {
+            font-size: 2rem !important;
+        }
+        
+        .card {
+            margin-bottom: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem !important;
+        }
     }
 </style>
 {% endblock %}

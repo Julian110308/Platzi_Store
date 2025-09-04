@@ -1,9 +1,8 @@
-# productos/views.py
-
 import requests
 import json
 from django.shortcuts import render, redirect
 from .forms import BuscarProductoForm, CrearProductoForm
+from django.http import HttpResponse
 
 def inicio(request):
     base_url = 'https://api.escuelajs.co/api/v1/products'
@@ -12,7 +11,17 @@ def inicio(request):
     try:
         response = requests.get(base_url)
         response.raise_for_status()
-        products_data = response.json()
+        
+        # Agregamos esta lógica para asegurar que `data` siempre sea una lista
+        data = response.json()
+        if isinstance(data, list):
+            products_data = data
+        else:
+            # Si no es una lista, asumimos que es un solo objeto y lo convertimos a una lista
+            products_data = [data]
+
+        # Filtramos solo los productos que tienen un 'id' válido
+        products_data = [p for p in products_data if 'id' in p and p['id'] is not None]
         
     except requests.exceptions.RequestException as e:
         print(f'Error al conectar con la API: {e}')
@@ -37,92 +46,109 @@ def buscar_producto_view(request):
                 response.raise_for_status()
                 product_data = response.json()
                 
-                # Verificar si la respuesta contiene un error (producto no encontrado)
-                if 'message' in product_data and product_data.get('statusCode') == 404:
-                    product_data = {'error': f'Producto con ID {product_id} no encontrado.'}
-                    
-            except requests.exceptions.HTTPError as e:
-                if response.status_code == 404:
-                    product_data = {'error': f'Producto con ID {product_id} no encontrado.'}
-                else:
-                    product_data = {'error': f'Error HTTP: {e}'}
+                if product_data.get('statusCode') == 404:
+                    product_data = {'error': 'Producto no encontrado.'}
+
             except requests.exceptions.RequestException as e:
                 product_data = {'error': f'Error al conectar con la API: {e}'}
-            except ValueError:
-                product_data = {'error': 'Respuesta de la API no válida.'}
 
     context = {
         'form': form,
-        'product_data': product_data,
+        'product_data': product_data
     }
     return render(request, 'buscar_producto.html', context)
 
 def crear_producto_view(request):
+    message = None
     form = CrearProductoForm()
+    
+    if request.method == 'POST':
+        form = CrearProductoForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            # Corregido: usar 'image' en lugar de 'images'
+            data['images'] = [data['image']]  # La API espera un array de imágenes
+            del data['image']  # Eliminar el campo 'image' original
+            
+            base_url = 'https://api.escuelajs.co/api/v1/products'
+            
+            try:
+                response = requests.post(base_url, json=data)
+                response.raise_for_status()
+                
+                new_product = response.json()
+                message = f'¡Producto "{new_product["title"]}" creado con éxito!'
+            except requests.exceptions.RequestException as e:
+                message = f'Error al crear el producto: {e}'
+    
+    context = {
+        'form': form,
+        'message': message,
+        'edit_mode': False,  # Añadido para distinguir modo
+    }
+    return render(request, 'crear_producto.html', context)
+
+def eliminar_producto_view(request, product_id):
+    if request.method == 'POST':
+        base_url = f'https://api.escuelajs.co/api/v1/products/{product_id}'
+        
+        try:
+            response = requests.delete(base_url)
+            response.raise_for_status()
+            
+        except requests.exceptions.RequestException as e:
+            return render(request, 'error.html', {'error_message': f'Error al eliminar: {e}'})
+    
+    return redirect('productos:inicio')
+
+def editar_producto_view(request, product_id):
+    base_url = f'https://api.escuelajs.co/api/v1/products/{product_id}'
     message = None
     
     if request.method == 'POST':
         form = CrearProductoForm(request.POST)
         if form.is_valid():
-            title = form.cleaned_data['title']
-            price = form.cleaned_data['price']
-            description = form.cleaned_data['description']
-            category = form.cleaned_data['category']  # Ahora es texto, no ID
-            image = form.cleaned_data['image']  # Ahora es una sola imagen
-            
-            # Mapear categorías a sus IDs correspondientes en la API
-            category_mapping = {
-                'electronics': 2,
-                'jewelery': 3,
-                "men's clothing": 4,
-                "women's clothing": 5,
-            }
-            
-            category_id = category_mapping.get(category, 1)  # Default a 1 si no encuentra
-            
-            base_url = 'https://api.escuelajs.co/api/v1/products/'
-            product_data = {
-                'title': title,
-                'price': float(price),
-                'description': description,
-                'categoryId': category_id,
-                'images': [image]  # La API espera un array de imágenes
-            }
-            
-            headers = {
-                'Content-Type': 'application/json'
-            }
+            data = form.cleaned_data
+            # Corregido: usar 'image' en lugar de 'images'
+            data['images'] = [data['image']]  # La API espera un array de imágenes
+            del data['image']  # Eliminar el campo 'image' original
             
             try:
-                print(f"Enviando datos: {product_data}")  # Para debug
-                
-                response = requests.post(base_url, data=json.dumps(product_data), headers=headers)
+                response = requests.put(base_url, json=data)
                 response.raise_for_status()
-                created_product = response.json()
                 
-                print(f"Respuesta de la API: {created_product}")  # Para debug
+                updated_product = response.json()
+                message = f'¡Producto "{updated_product["title"]}" actualizado con éxito!'
+                # No redirigir inmediatamente para mostrar el mensaje
                 
-                message = f'¡Producto creado exitosamente! ID: {created_product.get("id", "N/A")}'
-                # Limpiar el formulario después de crear exitosamente
-                form = CrearProductoForm()
-            
             except requests.exceptions.RequestException as e:
-                print(f"Error de requests: {e}")
-                if hasattr(e, 'response') and e.response is not None:
-                    try:
-                        error_data = e.response.json()
-                        message = f'Error al crear el producto: {error_data}'
-                    except:
-                        message = f'Error al crear el producto: {e.response.text}'
-                else:
-                    message = f'Error al crear el producto: {e}'
-            except json.JSONDecodeError as e:
-                message = f'Error al decodificar la respuesta de la API: {e}'
-            except Exception as e:
-                message = f'Error inesperado: {e}'
+                message = f'Error al actualizar el producto: {e}'
+    
+    else:
+        try:
+            response = requests.get(base_url)
+            response.raise_for_status()
+            product_data = response.json()
+            
+            # Corregido: adaptar los datos del producto al formulario
+            initial_data = {
+                'title': product_data.get('title', ''),
+                'price': product_data.get('price', ''),
+                'description': product_data.get('description', ''),
+                'category': product_data.get('category', ''),
+                'image': product_data.get('images', [''])[0] if product_data.get('images') else ''
+            }
+            
+            form = CrearProductoForm(initial=initial_data)
+        
+        except requests.exceptions.RequestException as e:
+            return HttpResponse(f'Error al obtener los datos del producto: {e}', status=500)
     
     context = {
         'form': form,
+        'product_id': product_id,
+        'edit_mode': True,
         'message': message,
     }
+    
     return render(request, 'crear_producto.html', context)
