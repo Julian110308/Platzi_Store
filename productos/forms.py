@@ -1,7 +1,7 @@
 from django import forms
 from django.core.validators import URLValidator, MinValueValidator
 from django.core.exceptions import ValidationError
-import requests
+import re
 
 class BuscarProductoForm(forms.Form):
     product_id = forms.IntegerField(
@@ -63,7 +63,8 @@ class CrearProductoForm(forms.Form):
         validators=[URLValidator(message="Ingresa una URL válida")],
         widget=forms.URLInput(attrs={
             'placeholder': 'https://ejemplo.com/imagen.jpg',
-            'class': 'form-input'
+            'class': 'form-input',
+            'id': 'image-url-input'  # Para JavaScript
         })
     )
 
@@ -86,13 +87,35 @@ class CrearProductoForm(forms.Form):
     def clean_image(self):
         image_url = self.cleaned_data.get('image')
         if image_url:
-            # Verificar que la URL es accesible (opcional, puede ser lento)
-            try:
-                response = requests.head(image_url, timeout=5)
-                if response.status_code >= 400:
-                    raise ValidationError("La URL de la imagen no es accesible.")
-            except requests.RequestException:
-                # Si no se puede verificar, permitir que pase
-                # (la API se encargará de validar)
+            # Validación básica de formato de imagen
+            valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']
+            
+            # Extraer extensión de la URL (sin parámetros)
+            clean_url = image_url.split('?')[0].lower()
+            
+            # Verificar si tiene una extensión de imagen válida
+            has_valid_extension = any(clean_url.endswith(ext) for ext in valid_extensions)
+            
+            # Verificar patrones comunes de servicios de imágenes
+            image_services = [
+                'images.unsplash.com',
+                'cdn.pixabay.com',
+                'images.pexels.com',
+                'i.imgur.com',
+                'picsum.photos',
+                'via.placeholder.com',
+                'placehold.it',
+                'source.unsplash.com',
+                'firebasestorage.googleapis.com',
+                'amazonaws.com',
+                'cloudinary.com'
+            ]
+            
+            is_image_service = any(service in image_url.lower() for service in image_services)
+            
+            # Si no tiene extensión válida ni es de un servicio conocido, dar advertencia
+            if not has_valid_extension and not is_image_service:
+                # No bloquear, solo advertir (esto se podría manejar en el frontend)
                 pass
+                
         return image_url

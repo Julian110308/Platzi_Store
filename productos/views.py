@@ -147,7 +147,7 @@ def editar_producto_view(request, product_id):
             # Preparar datos para la API
             payload = {
                 'title': data['title'],
-                'price': float(data['price']),
+                'price': int(data['price']),
                 'description': data['description'],
                 'categoryId': get_category_id(data['category']),
                 'images': [data['image']]
@@ -155,42 +155,48 @@ def editar_producto_view(request, product_id):
             
             try:
                 headers = {'Content-Type': 'application/json'}
-                response = requests.put(base_url, json=payload, headers=headers)
+                response = requests.put(base_url, json=payload, headers=headers, timeout=10)
                 
+                print(f"PUT Payload: {payload}")
                 print(f"Status Code: {response.status_code}")
                 print(f"Response: {response.text}")
                 
-                if response.status_code == 200:
-                    updated_product = response.json()
-                    message = f'¡Producto "{updated_product.get("title", "")}" actualizado con éxito!'
+                if response.status_code in [200, 201]:
+                    response_data = response.json()
+                    message = f'¡Producto actualizado con éxito! ID: {response_data.get("id", product_id)}'
                 else:
-                    response.raise_for_status()
-                    
-            except requests.exceptions.HTTPError as e:
-                try:
-                    error_data = response.json()
-                    message = f'Error de la API: {error_data.get("message", str(e))}'
-                except:
-                    message = f'Error HTTP {response.status_code}: {response.text}'
+                    try:
+                        error_data = response.json()
+                        message = f'Error de la API: {error_data}'
+                    except:
+                        message = f'Error HTTP {response.status_code}: {response.text}'
+                        
+            except requests.exceptions.Timeout:
+                message = 'Error: Tiempo de espera agotado. Inténtalo de nuevo.'
+            except requests.exceptions.ConnectionError:
+                message = 'Error: No se pudo conectar con la API. Verifica tu conexión.'
             except requests.exceptions.RequestException as e:
                 message = f'Error de conexión: {e}'
     
     else:
         try:
-            response = requests.get(base_url)
-            response.raise_for_status()
-            product_data = response.json()
+            response = requests.get(base_url, timeout=10)
             
-            # Adaptar datos del producto al formulario
-            initial_data = {
-                'title': product_data.get('title', ''),
-                'price': product_data.get('price', ''),
-                'description': product_data.get('description', ''),
-                'category': get_category_name_from_data(product_data),
-                'image': product_data.get('images', [''])[0] if product_data.get('images') else ''
-            }
-            
-            form = CrearProductoForm(initial=initial_data)
+            if response.status_code == 200:
+                product_data = response.json()
+                
+                # Adaptar datos del producto al formulario
+                initial_data = {
+                    'title': product_data.get('title', ''),
+                    'price': str(product_data.get('price', '')),
+                    'description': product_data.get('description', ''),
+                    'category': get_category_name_from_data(product_data),
+                    'image': product_data.get('images', [''])[0] if product_data.get('images') else ''
+                }
+                
+                form = CrearProductoForm(initial=initial_data)
+            else:
+                return HttpResponse(f'Error al obtener el producto: Status {response.status_code}', status=400)
         
         except requests.exceptions.RequestException as e:
             return HttpResponse(f'Error al obtener los datos del producto: {e}', status=500)

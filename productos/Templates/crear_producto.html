@@ -27,11 +27,36 @@
 </div>
 
 {% if message %}
-    <div class="message message-success" style="margin-bottom: 2rem;">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
-            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
-        </svg>
+    <div class="message {% if 'Error' in message or 'error' in message %}message-error{% else %}message-success{% endif %}" style="margin-bottom: 2rem;">
+        {% if 'Error' in message or 'error' in message %}
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+        {% else %}
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+            </svg>
+        {% endif %}
         {{ message }}
+    </div>
+{% endif %}
+
+<!-- Mostrar errores del formulario -->
+{% if form.errors %}
+    <div class="message message-error" style="margin-bottom: 2rem;">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <div>
+            <strong>Por favor corrige los siguientes errores:</strong>
+            <ul style="margin: 0.5rem 0 0 0; padding-left: 1rem;">
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <li>{{ field }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            </ul>
+        </div>
     </div>
 {% endif %}
 
@@ -52,7 +77,7 @@
             {% endif %}
         </h2>
         
-        <form method="post" id="product-form" onsubmit="showProcessingState()">
+        <form method="post" id="product-form" onsubmit="return handleFormSubmit(event)">
             {% csrf_token %}
             
             <!-- Título -->
@@ -63,13 +88,10 @@
                     </svg>
                     Título del Producto *
                 </label>
-                {% for field in form %}
-                    {% if field.name == 'title' %}
-                        <input type="text" name="{{ field.name }}" class="form-input" 
-                               id="id_title" placeholder="Ej: iPhone 14 Pro Max"
-                               value="{{ field.value|default:'' }}">
-                    {% endif %}
-                {% endfor %}
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="field-error">{{ form.title.errors.0 }}</div>
+                {% endif %}
                 <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">Un nombre atractivo y descriptivo para tu producto</small>
             </div>
 
@@ -81,13 +103,10 @@
                     </svg>
                     Precio *
                 </label>
-                {% for field in form %}
-                    {% if field.name == 'price' %}
-                        <input type="number" step="0.01" name="{{ field.name }}" class="form-input"
-                               id="id_price" placeholder="29.99"
-                               value="{{ field.value|default:'' }}">
-                    {% endif %}
-                {% endfor %}
+                {{ form.price }}
+                {% if form.price.errors %}
+                    <div class="field-error">{{ form.price.errors.0 }}</div>
+                {% endif %}
                 <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">Precio en dólares (ej: 29.99)</small>
             </div>
 
@@ -99,12 +118,10 @@
                     </svg>
                     Descripción *
                 </label>
-                {% for field in form %}
-                    {% if field.name == 'description' %}
-                        <textarea name="{{ field.name }}" class="form-input" id="id_description" 
-                                  rows="4" placeholder="Describe las características y beneficios de tu producto...">{{ field.value|default:'' }}</textarea>
-                    {% endif %}
-                {% endfor %}
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="field-error">{{ form.description.errors.0 }}</div>
+                {% endif %}
                 <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">Describe las características y beneficios de tu producto</small>
             </div>
 
@@ -116,13 +133,11 @@
                     </svg>
                     URL de la Imagen *
                 </label>
-                {% for field in form %}
-                    {% if field.name == 'image' %}
-                        <input type="url" name="{{ field.name }}" class="form-input"
-                               id="id_image" placeholder="https://ejemplo.com/imagen.jpg"
-                               value="{{ field.value|default:'' }}">
-                    {% endif %}
-                {% endfor %}
+                {{ form.image }}
+                {% if form.image.errors %}
+                    <div class="field-error">{{ form.image.errors.0 }}</div>
+                {% endif %}
+                <div id="image-validation-status" class="image-status" style="display: none; margin-top: 0.5rem;"></div>
                 <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">URL de una imagen de alta calidad de tu producto</small>
             </div>
 
@@ -134,17 +149,10 @@
                     </svg>
                     Categoría *
                 </label>
-                {% for field in form %}
-                    {% if field.name == 'category' %}
-                        <select name="{{ field.name }}" class="form-input" id="id_category">
-                            <option value="">Selecciona una categoría</option>
-                            <option value="electronics" {% if field.value == 'electronics' %}selected{% endif %}>Electrónicos</option>
-                            <option value="jewelery" {% if field.value == 'jewelery' %}selected{% endif %}>Joyería</option>
-                            <option value="men's clothing" {% if field.value == "men's clothing" %}selected{% endif %}>Ropa de Hombre</option>
-                            <option value="women's clothing" {% if field.value == "women's clothing" %}selected{% endif %}>Ropa de Mujer</option>
-                        </select>
-                    {% endif %}
-                {% endfor %}
+                {{ form.category }}
+                {% if form.category.errors %}
+                    <div class="field-error">{{ form.category.errors.0 }}</div>
+                {% endif %}
                 <small style="color: var(--gray-500); margin-top: 0.25rem; display: block;">Selecciona la categoría que mejor describa tu producto</small>
             </div>
 
@@ -279,7 +287,7 @@
         <div class="card" style="background: var(--gray-50); cursor: pointer;" onclick="fillExample('fashion')">
             <div style="height: 120px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: var(--border-radius); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
                 <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                 </svg>
             </div>
             <h4 style="color: var(--gray-800); margin-bottom: 0.5rem;">Camiseta Vintage</h4>
@@ -316,31 +324,30 @@
     const previewImage = document.getElementById('preview-image');
     const previewCategory = document.getElementById('preview-category');
 
+    // Variables para validación de imagen
+    let imageValidationTimeout;
+    let isImageValid = false;
+
     // Actualizar vista previa en tiempo real
     function updatePreview() {
-        const title = titleInput.value || 'Título del producto';
-        const price = priceInput.value ? `$${parseFloat(priceInput.value).toFixed(2)}` : '$0.00';
-        const description = descriptionInput.value || 'Descripción del producto...';
-        const imageUrl = imageInput.value;
-        const category = categoryInput.options[categoryInput.selectedIndex]?.text || 'Sin categoría';
+        const title = titleInput?.value || 'Título del producto';
+        const price = priceInput?.value ? `${parseFloat(priceInput.value).toFixed(2)}` : '$0.00';
+        const description = descriptionInput?.value || 'Descripción del producto...';
+        const imageUrl = imageInput?.value;
+        const category = categoryInput?.options[categoryInput.selectedIndex]?.text || 'Sin categoría';
 
-        previewTitle.textContent = title;
-        previewPrice.textContent = price;
-        previewDescription.textContent = description;
-        previewCategory.textContent = category;
+        if (previewTitle) previewTitle.textContent = title;
+        if (previewPrice) previewPrice.textContent = price;
+        if (previewDescription) previewDescription.textContent = description;
+        if (previewCategory) previewCategory.textContent = category;
 
         // Actualizar imagen
-        if (imageUrl && isValidUrl(imageUrl)) {
-            previewImage.innerHTML = `<img src="${imageUrl}" alt="${title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--border-radius);" onerror="this.parentElement.innerHTML='<div style=\\'text-align: center; color: var(--error-color);\\'>Error al cargar la imagen</div>'">`;
-        } else {
-            previewImage.innerHTML = `
-                <div style="text-align: center;">
-                    <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                    </svg>
-                    <p style="margin-top: 0.5rem;">Imagen del producto</p>
-                </div>
-            `;
+        if (previewImage) {
+            if (imageUrl && isValidUrl(imageUrl)) {
+                validateImageAsync(imageUrl);
+            } else {
+                resetImagePreview();
+            }
         }
     }
 
@@ -354,12 +361,156 @@
         }
     }
 
+    // Validación asíncrona de imagen
+    function validateImageAsync(imageUrl) {
+        // Limpiar timeout anterior
+        if (imageValidationTimeout) {
+            clearTimeout(imageValidationTimeout);
+        }
+
+        // Mostrar estado de carga
+        showImageStatus('loading', 'Verificando imagen...');
+
+        // Intentar cargar la imagen
+        const img = new Image();
+        const startTime = Date.now();
+
+        imageValidationTimeout = setTimeout(() => {
+            img.onload = null;
+            img.onerror = null;
+            showImageStatus('warning', 'Verificación de imagen tomó demasiado tiempo');
+            loadImageInPreview(imageUrl, 'Imagen podría no estar disponible');
+        }, 8000); // 8 segundos timeout
+
+        img.onload = function() {
+            clearTimeout(imageValidationTimeout);
+            const loadTime = Date.now() - startTime;
+            isImageValid = true;
+            
+            if (loadTime > 3000) {
+                showImageStatus('warning', 'Imagen carga lentamente');
+            } else {
+                showImageStatus('success', 'Imagen válida y accesible');
+            }
+            
+            loadImageInPreview(imageUrl, titleInput?.value || 'Producto');
+        };
+
+        img.onerror = function() {
+            clearTimeout(imageValidationTimeout);
+            isImageValid = false;
+            showImageStatus('error', 'No se pudo cargar la imagen. Verifica la URL.');
+            resetImagePreview();
+        };
+
+        img.src = imageUrl;
+    }
+
+    // Mostrar estado de validación de imagen
+    function showImageStatus(type, message) {
+        const statusElement = document.getElementById('image-validation-status');
+        if (statusElement) {
+            statusElement.style.display = 'flex';
+            statusElement.style.alignItems = 'center';
+            statusElement.style.gap = '0.5rem';
+            statusElement.style.fontSize = '0.875rem';
+            statusElement.style.fontWeight = '500';
+
+            let icon = '';
+            let color = '';
+
+            switch (type) {
+                case 'loading':
+                    icon = '<div class="loading-small"></div>';
+                    color = 'var(--primary-color)';
+                    break;
+                case 'success':
+                    icon = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
+                    color = '#10b981';
+                    break;
+                case 'warning':
+                    icon = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>';
+                    color = '#f59e0b';
+                    break;
+                case 'error':
+                    icon = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
+                    color = '#ef4444';
+                    break;
+            }
+
+            statusElement.innerHTML = `${icon} <span>${message}</span>`;
+            statusElement.style.color = color;
+
+            // Ocultar después de unos segundos si es éxito
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 3000);
+            }
+        }
+    }
+
+    // Cargar imagen en la vista previa
+    function loadImageInPreview(imageUrl, altText) {
+        if (previewImage) {
+            previewImage.innerHTML = `<img src="${imageUrl}" alt="${altText}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--border-radius);" onerror="this.parentElement.innerHTML='<div style=\\'text-align: center; color: var(--error-color); padding: 2rem;\\'>Error al cargar imagen<br><small>Revisa la URL</small></div>'">`;
+        }
+    }
+
+    // Resetear vista previa de imagen
+    function resetImagePreview() {
+        if (previewImage) {
+            previewImage.innerHTML = `
+                <div style="text-align: center;">
+                    <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                    </svg>
+                    <p style="margin-top: 0.5rem;">Imagen del producto</p>
+                </div>
+            `;
+        }
+    }
+
+    // Manejar envío del formulario
+    function handleFormSubmit(event) {
+        // Permitir que el formulario se envíe normalmente
+        // La validación del servidor se encargará del resto
+        showProcessingState();
+        return true;
+    }
+
     // Event listeners para actualizar la vista previa
     if (titleInput) titleInput.addEventListener('input', updatePreview);
     if (priceInput) priceInput.addEventListener('input', updatePreview);
     if (descriptionInput) descriptionInput.addEventListener('input', updatePreview);
-    if (imageInput) imageInput.addEventListener('input', updatePreview);
+    if (imageInput) {
+        imageInput.addEventListener('input', updatePreview);
+        // Validación con delay para evitar muchas peticiones
+        imageInput.addEventListener('input', debounce(function() {
+            const url = imageInput.value.trim();
+            if (url && isValidUrl(url)) {
+                validateImageAsync(url);
+            } else if (url) {
+                showImageStatus('error', 'URL no válida');
+            } else {
+                document.getElementById('image-validation-status').style.display = 'none';
+            }
+        }, 1000));
+    }
     if (categoryInput) categoryInput.addEventListener('change', updatePreview);
+
+    // Función de debounce
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
 
     // Función para llenar ejemplos (solo disponible en modo crear)
     function fillExample(type) {
@@ -388,7 +539,7 @@
         };
 
         const example = examples[type];
-        if (example) {
+        if (example && titleInput && priceInput && descriptionInput && imageInput && categoryInput) {
             titleInput.value = example.title;
             priceInput.value = example.price;
             descriptionInput.value = example.description;
@@ -403,32 +554,50 @@
             }
             
             updatePreview();
-            showMessage('Ejemplo cargado correctamente', 'success');
+            showNotification('Ejemplo cargado correctamente', 'success');
         }
     }
 
     function showProcessingState() {
-        document.getElementById('action-text').style.display = 'none';
-        document.getElementById('action-loading').style.display = 'inline-block';
+        const actionText = document.getElementById('action-text');
+        const actionLoading = document.getElementById('action-loading');
+        if (actionText) actionText.style.display = 'none';
+        if (actionLoading) actionLoading.style.display = 'inline-block';
     }
 
-    function showMessage(text, type) {
+    function showNotification(text, type) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message message-${type}`;
-        messageDiv.style.position = 'fixed';
-        messageDiv.style.top = '20px';
-        messageDiv.style.right = '20px';
-        messageDiv.style.zIndex = '9999';
-        messageDiv.style.minWidth = '300px';
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 500px;
+            transition: all 0.3s ease;
+            transform: translateX(100%);
+        `;
+        
+        const icon = type === 'success' 
+            ? '<path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>'
+            : '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>';
+            
         messageDiv.innerHTML = `
             <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
-                <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                ${icon}
             </svg>
             ${text}
         `;
         
         document.body.appendChild(messageDiv);
         
+        // Animar entrada
+        setTimeout(() => {
+            messageDiv.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Animar salida
         setTimeout(() => {
             messageDiv.style.opacity = '0';
             messageDiv.style.transform = 'translateX(100%)';
@@ -439,32 +608,6 @@
             }, 300);
         }, 3000);
     }
-
-    // Validación del formulario
-    document.getElementById('product-form').addEventListener('submit', function(e) {
-        const title = titleInput.value.trim();
-        const price = priceInput.value.trim();
-        const description = descriptionInput.value.trim();
-        const image = imageInput.value.trim();
-
-        if (!title || !price || !description || !image) {
-            e.preventDefault();
-            showMessage('Por favor completa todos los campos obligatorios', 'error');
-            return;
-        }
-
-        if (isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
-            e.preventDefault();
-            showMessage('El precio debe ser un número válido mayor a 0', 'error');
-            return;
-        }
-
-        if (!isValidUrl(image)) {
-            e.preventDefault();
-            showMessage('Por favor ingresa una URL de imagen válida', 'error');
-            return;
-        }
-    });
 
     // Inicializar vista previa
     document.addEventListener('DOMContentLoaded', function() {
@@ -496,9 +639,35 @@
         background: rgba(37, 99, 235, 0.02) !important;
     }
 
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+    }
+
+    .field-error {
+        color: var(--error-color, #dc2626);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
     #id_description {
         min-height: 120px !important;
         resize: vertical !important;
+    }
+
+    /* Estado de validación de imagen */
+    .image-status {
+        padding: 0.5rem;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.02);
+        border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     /* Animaciones para las tarjetas de ejemplo */
@@ -536,6 +705,15 @@
         animation: spin 1s linear infinite;
     }
 
+    .loading-small {
+        width: 16px;
+        height: 16px;
+        border: 2px solid currentColor;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -546,7 +724,7 @@
         padding: 1rem;
         border-radius: var(--border-radius);
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         font-weight: 500;
         transition: all 0.3s ease;
     }
