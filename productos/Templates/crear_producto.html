@@ -310,314 +310,373 @@
 {% endif %}
 
 <script>
-    // Referencias a los elementos del formulario
-    const titleInput = document.getElementById('id_title');
-    const priceInput = document.getElementById('id_price');
-    const descriptionInput = document.getElementById('id_description');
-    const imageInput = document.getElementById('id_image');
-    const categoryInput = document.getElementById('id_category');
+    // SCRIPT CORREGIDO - Búsqueda flexible de elementos
 
-    // Referencias a los elementos de vista previa
-    const previewTitle = document.getElementById('preview-title');
-    const previewPrice = document.getElementById('preview-price');
-    const previewDescription = document.getElementById('preview-description');
-    const previewImage = document.getElementById('preview-image');
-    const previewCategory = document.getElementById('preview-category');
-
-    // Variables para validación de imagen
-    let imageValidationTimeout;
-    let isImageValid = false;
-
-    // Actualizar vista previa en tiempo real
-    function updatePreview() {
-        const title = titleInput?.value || 'Título del producto';
-        const price = priceInput?.value ? `${parseFloat(priceInput.value).toFixed(2)}` : '$0.00';
-        const description = descriptionInput?.value || 'Descripción del producto...';
-        const imageUrl = imageInput?.value;
-        const category = categoryInput?.options[categoryInput.selectedIndex]?.text || 'Sin categoría';
-
-        if (previewTitle) previewTitle.textContent = title;
-        if (previewPrice) previewPrice.textContent = price;
-        if (previewDescription) previewDescription.textContent = description;
-        if (previewCategory) previewCategory.textContent = category;
-
-        // Actualizar imagen
-        if (previewImage) {
-            if (imageUrl && isValidUrl(imageUrl)) {
-                validateImageAsync(imageUrl);
-            } else {
-                resetImagePreview();
-            }
+// Función para encontrar elementos de manera flexible
+function findElement(selectors) {
+    for (let selector of selectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+            console.log(`✅ Elemento encontrado con selector: ${selector}`);
+            return element;
         }
     }
+    console.error(`❌ No se encontró elemento con ninguno de estos selectores:`, selectors);
+    return null;
+}
 
-    // Validar URL
-    function isValidUrl(string) {
-        try {
-            new URL(string);
-            return true;
-        } catch (_) {
-            return false;
-        }
+// Búsqueda flexible de elementos del formulario
+const titleInput = findElement(['#id_title', 'input[name="title"]', 'input[type="text"]']);
+const priceInput = findElement(['#id_price', 'input[name="price"]']);
+const descriptionInput = findElement(['#id_description', 'textarea[name="description"]', 'textarea']);
+const imageInput = findElement(['#id_image', 'input[name="image"]', 'input[placeholder*="imagen"]', 'input[placeholder*="URL"]']);
+const categoryInput = findElement(['#id_category', 'select[name="category"]', 'select']);
+
+// Búsqueda flexible de elementos de vista previa
+const previewTitle = findElement(['#preview-title']);
+const previewPrice = findElement(['#preview-price']);
+const previewDescription = findElement(['#preview-description']);
+const previewImage = findElement(['#preview-image']);
+const previewCategory = findElement(['#preview-category']);
+
+// Debug: Verificar que los elementos existen
+console.log('=== DEBUG: Elementos encontrados ===');
+console.log('titleInput:', !!titleInput);
+console.log('priceInput:', !!priceInput);
+console.log('descriptionInput:', !!descriptionInput);
+console.log('imageInput:', !!imageInput);
+console.log('categoryInput:', !!categoryInput);
+console.log('previewImage:', !!previewImage);
+
+// Variables para validación de imagen
+let imageValidationTimeout;
+
+// Función principal de actualización de vista previa
+function updatePreview() {
+    console.log('=== updatePreview llamada ===');
+    
+    // Actualizar campos de texto
+    if (titleInput && previewTitle) {
+        previewTitle.textContent = titleInput.value || 'Título del producto';
+    }
+    
+    if (priceInput && previewPrice) {
+        const price = priceInput.value ? `$${parseFloat(priceInput.value).toFixed(2)}` : '$0.00';
+        previewPrice.textContent = price;
+    }
+    
+    if (descriptionInput && previewDescription) {
+        previewDescription.textContent = descriptionInput.value || 'Descripción del producto...';
+    }
+    
+    if (categoryInput && previewCategory) {
+        const category = categoryInput.options[categoryInput.selectedIndex]?.text || 'Sin categoría';
+        previewCategory.textContent = category;
     }
 
-    // Validación asíncrona de imagen
-    function validateImageAsync(imageUrl) {
-        // Limpiar timeout anterior
-        if (imageValidationTimeout) {
-            clearTimeout(imageValidationTimeout);
-        }
+    // Actualizar imagen
+    updateImagePreview();
+}
 
-        // Mostrar estado de carga
-        showImageStatus('loading', 'Verificando imagen...');
+// Función para actualizar imagen
+function updateImagePreview() {
+    console.log('=== updateImagePreview llamada ===');
+    
+    if (!imageInput) {
+        console.error('❌ imageInput no encontrado - no se puede actualizar imagen');
+        return;
+    }
+    
+    const imageUrl = imageInput.value.trim();
+    console.log('URL ingresada:', imageUrl);
+    
+    if (!imageUrl) {
+        console.log('No hay URL, reseteando imagen');
+        resetImagePreview();
+        hideImageStatus();
+        return;
+    }
 
-        // Intentar cargar la imagen
-        const img = new Image();
-        const startTime = Date.now();
+    if (!isValidUrl(imageUrl)) {
+        console.log('URL no válida');
+        showImageStatus('error', 'URL no válida');
+        resetImagePreview();
+        return;
+    }
 
-        imageValidationTimeout = setTimeout(() => {
-            img.onload = null;
-            img.onerror = null;
-            showImageStatus('warning', 'Verificación de imagen tomó demasiado tiempo');
-            loadImageInPreview(imageUrl, 'Imagen podría no estar disponible');
-        }, 8000); // 8 segundos timeout
+    console.log('URL válida, intentando cargar imagen...');
+    loadImageDirectly(imageUrl);
+}
 
-        img.onload = function() {
-            clearTimeout(imageValidationTimeout);
-            const loadTime = Date.now() - startTime;
-            isImageValid = true;
-            
-            if (loadTime > 3000) {
-                showImageStatus('warning', 'Imagen carga lentamente');
-            } else {
-                showImageStatus('success', 'Imagen válida y accesible');
-            }
-            
-            loadImageInPreview(imageUrl, titleInput?.value || 'Producto');
+// Función para cargar imagen directamente
+function loadImageDirectly(imageUrl) {
+    console.log('=== loadImageDirectly llamada con URL:', imageUrl);
+    
+    if (!previewImage) {
+        console.error('❌ previewImage no encontrado!');
+        return;
+    }
+
+    showImageStatus('loading', 'Cargando imagen...');
+    
+    // Crear imagen
+    const img = document.createElement('img');
+    img.alt = 'Vista previa del producto';
+    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: var(--border-radius);';
+    
+    // Timer para timeout manual
+    const loadingTimeout = setTimeout(() => {
+        console.warn('⚠️ Imagen tardando mucho, pero continuando...');
+        showImageStatus('warning', 'La imagen está tardando en cargar...');
+    }, 5000);
+    
+    img.onload = function() {
+        console.log('✅ Imagen cargada exitosamente:', imageUrl);
+        clearTimeout(loadingTimeout);
+        showImageStatus('success', 'Imagen cargada correctamente');
+        setTimeout(() => hideImageStatus(), 2000);
+    };
+    
+    img.onerror = function(error) {
+        console.error('❌ Error al cargar imagen:', imageUrl, error);
+        clearTimeout(loadingTimeout);
+        resetImagePreview();
+        showImageStatus('error', 'No se pudo cargar la imagen. Intenta con otra URL.');
+    };
+    
+    console.log('Asignando src y agregando al DOM...');
+    img.src = imageUrl;
+    previewImage.innerHTML = '';
+    previewImage.appendChild(img);
+    console.log('✅ Imagen agregada al DOM');
+}
+
+// Validar URL
+function isValidUrl(string) {
+    try {
+        const url = new URL(string);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (_) {
+        return false;
+    }
+}
+
+// Resetear imagen a estado inicial
+function resetImagePreview() {
+    console.log('=== resetImagePreview llamada ===');
+    if (!previewImage) {
+        console.warn('previewImage no encontrado para resetear');
+        return;
+    }
+    
+    previewImage.innerHTML = `
+        <div style="text-align: center;">
+            <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+            </svg>
+            <p style="margin-top: 0.5rem;">Imagen del producto</p>
+        </div>
+    `;
+    console.log('✅ Imagen reseteada');
+}
+
+// Mostrar estado de validación
+function showImageStatus(type, message) {
+    console.log('=== showImageStatus:', type, message);
+    const statusElement = findElement(['#image-validation-status']);
+    if (!statusElement) {
+        console.warn('Elemento image-validation-status no encontrado');
+        return;
+    }
+
+    statusElement.style.display = 'flex';
+    statusElement.style.alignItems = 'center';
+    statusElement.style.gap = '0.5rem';
+
+    let icon = '';
+    let color = '';
+
+    switch (type) {
+        case 'loading':
+            icon = '<div style="width:16px;height:16px;border:2px solid currentColor;border-top:2px solid transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>';
+            color = '#2563eb';
+            break;
+        case 'success':
+            icon = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
+            color = '#10b981';
+            break;
+        case 'warning':
+            icon = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>';
+            color = '#f59e0b';
+            break;
+        case 'error':
+            icon = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
+            color = '#ef4444';
+            break;
+    }
+
+    statusElement.innerHTML = `${icon} <span>${message}</span>`;
+    statusElement.style.color = color;
+}
+
+// Ocultar estado de validación
+function hideImageStatus() {
+    const statusElement = findElement(['#image-validation-status']);
+    if (statusElement) {
+        statusElement.style.display = 'none';
+    }
+}
+
+// Función debounce
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
         };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
 
-        img.onerror = function() {
-            clearTimeout(imageValidationTimeout);
-            isImageValid = false;
-            showImageStatus('error', 'No se pudo cargar la imagen. Verifica la URL.');
-            resetImagePreview();
-        };
-
-        img.src = imageUrl;
+// Event listeners CON VERIFICACIÓN
+function setupEventListeners() {
+    console.log('=== Configurando event listeners ===');
+    
+    if (imageInput) {
+        console.log('✅ Configurando listeners para imageInput');
+        
+        imageInput.addEventListener('input', debounce(function(e) {
+            console.log('🔄 Event INPUT - Valor:', e.target.value);
+            updateImagePreview();
+        }, 500));
+        
+        imageInput.addEventListener('blur', function(e) {
+            console.log('🔄 Event BLUR - Valor:', e.target.value);
+            updateImagePreview();
+        });
+        
+        imageInput.addEventListener('paste', function(e) {
+            console.log('🔄 Event PASTE');
+            setTimeout(() => {
+                console.log('📋 Valor después de paste:', e.target.value);
+                updateImagePreview();
+            }, 100);
+        });
+    } else {
+        console.error('❌ No se pudo configurar listeners para imageInput');
     }
 
-    // Mostrar estado de validación de imagen
-    function showImageStatus(type, message) {
-        const statusElement = document.getElementById('image-validation-status');
-        if (statusElement) {
-            statusElement.style.display = 'flex';
-            statusElement.style.alignItems = 'center';
-            statusElement.style.gap = '0.5rem';
-            statusElement.style.fontSize = '0.875rem';
-            statusElement.style.fontWeight = '500';
-
-            let icon = '';
-            let color = '';
-
-            switch (type) {
-                case 'loading':
-                    icon = '<div class="loading-small"></div>';
-                    color = 'var(--primary-color)';
-                    break;
-                case 'success':
-                    icon = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
-                    color = '#10b981';
-                    break;
-                case 'warning':
-                    icon = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>';
-                    color = '#f59e0b';
-                    break;
-                case 'error':
-                    icon = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
-                    color = '#ef4444';
-                    break;
-            }
-
-            statusElement.innerHTML = `${icon} <span>${message}</span>`;
-            statusElement.style.color = color;
-
-            // Ocultar después de unos segundos si es éxito
-            if (type === 'success') {
-                setTimeout(() => {
-                    statusElement.style.display = 'none';
-                }, 3000);
-            }
-        }
-    }
-
-    // Cargar imagen en la vista previa
-    function loadImageInPreview(imageUrl, altText) {
-        if (previewImage) {
-            previewImage.innerHTML = `<img src="${imageUrl}" alt="${altText}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--border-radius);" onerror="this.parentElement.innerHTML='<div style=\\'text-align: center; color: var(--error-color); padding: 2rem;\\'>Error al cargar imagen<br><small>Revisa la URL</small></div>'">`;
-        }
-    }
-
-    // Resetear vista previa de imagen
-    function resetImagePreview() {
-        if (previewImage) {
-            previewImage.innerHTML = `
-                <div style="text-align: center;">
-                    <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                    </svg>
-                    <p style="margin-top: 0.5rem;">Imagen del producto</p>
-                </div>
-            `;
-        }
-    }
-
-    // Manejar envío del formulario
-    function handleFormSubmit(event) {
-        // Permitir que el formulario se envíe normalmente
-        // La validación del servidor se encargará del resto
-        showProcessingState();
-        return true;
-    }
-
-    // Event listeners para actualizar la vista previa
+    // Otros event listeners
     if (titleInput) titleInput.addEventListener('input', updatePreview);
     if (priceInput) priceInput.addEventListener('input', updatePreview);
     if (descriptionInput) descriptionInput.addEventListener('input', updatePreview);
-    if (imageInput) {
-        imageInput.addEventListener('input', updatePreview);
-        // Validación con delay para evitar muchas peticiones
-        imageInput.addEventListener('input', debounce(function() {
-            const url = imageInput.value.trim();
-            if (url && isValidUrl(url)) {
-                validateImageAsync(url);
-            } else if (url) {
-                showImageStatus('error', 'URL no válida');
-            } else {
-                document.getElementById('image-validation-status').style.display = 'none';
-            }
-        }, 1000));
-    }
     if (categoryInput) categoryInput.addEventListener('change', updatePreview);
+    
+    console.log('✅ Event listeners configurados');
+}
 
-    // Función de debounce
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+// Función para llenar ejemplos con URLs confiables
+function fillExample(type) {
+    console.log('=== fillExample llamada con tipo:', type);
+    
+    const examples = {
+        electronics: {
+            title: 'Auriculares Inalámbricos Premium',
+            price: '129.99',
+            description: 'Experimenta la libertad del sonido sin cables con nuestros auriculares premium.',
+            image: 'https://via.placeholder.com/400x400/4169E1/FFFFFF?text=Auriculares',
+            category: 'electronics'
+        },
+        fashion: {
+            title: 'Camiseta Vintage',
+            price: '24.99',
+            description: 'Camiseta de algodón 100% orgánico con diseño vintage único.',
+            image: 'https://via.placeholder.com/400x400/FF6B6B/FFFFFF?text=Camiseta',
+            category: "men's clothing"
+        },
+        home: {
+            title: 'Lámpara Moderna',
+            price: '89.99',
+            description: 'Ilumina tu espacio con estilo moderno.',
+            image: 'https://via.placeholder.com/400x400/4ECDC4/FFFFFF?text=Lampara',
+            category: 'electronics'
+        }
+    };
 
-    // Función para llenar ejemplos (solo disponible en modo crear)
-    function fillExample(type) {
-        const examples = {
-            electronics: {
-                title: 'Auriculares Inalámbricos Premium',
-                price: '129.99',
-                description: 'Experimenta la libertad del sonido sin cables con nuestros auriculares premium. Calidad de sonido excepcional, cancelación activa de ruido y hasta 30 horas de batería. Perfectos para trabajo, viajes y entretenimiento.',
-                image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop',
-                category: 'electronics'
-            },
-            fashion: {
-                title: 'Camiseta Vintage Edición Limitada',
-                price: '24.99',
-                description: 'Camiseta de algodón 100% orgánico con diseño vintage único. Corte cómodo y relajado, perfecta para el uso diario. Disponible en varios colores y tallas. Edición limitada con estampado exclusivo.',
-                image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
-                category: "men's clothing"
-            },
-            home: {
-                title: 'Lámpara de Mesa Moderna LED',
-                price: '89.99',
-                description: 'Ilumina tu espacio con estilo moderno y funcionalidad inteligente. LED ajustable con control táctil, múltiples niveles de intensidad y diseño minimalista. Perfecta para oficina o dormitorio.',
-                image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=500&fit=crop',
-                category: 'electronics'
-            }
-        };
-
-        const example = examples[type];
-        if (example && titleInput && priceInput && descriptionInput && imageInput && categoryInput) {
-            titleInput.value = example.title;
-            priceInput.value = example.price;
-            descriptionInput.value = example.description;
+    const example = examples[type];
+    if (example) {
+        console.log('📝 Llenando ejemplo con datos:', example);
+        
+        if (titleInput) titleInput.value = example.title;
+        if (priceInput) priceInput.value = example.price;
+        if (descriptionInput) descriptionInput.value = example.description;
+        if (imageInput) {
             imageInput.value = example.image;
-            
-            // Seleccionar categoría
+            console.log('🖼️ URL de imagen asignada:', example.image);
+        }
+        
+        if (categoryInput) {
             for (let i = 0; i < categoryInput.options.length; i++) {
                 if (categoryInput.options[i].value === example.category) {
                     categoryInput.selectedIndex = i;
                     break;
                 }
             }
-            
-            updatePreview();
-            showNotification('Ejemplo cargado correctamente', 'success');
         }
-    }
-
-    function showProcessingState() {
-        const actionText = document.getElementById('action-text');
-        const actionLoading = document.getElementById('action-loading');
-        if (actionText) actionText.style.display = 'none';
-        if (actionLoading) actionLoading.style.display = 'inline-block';
-    }
-
-    function showNotification(text, type) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message message-${type}`;
-        messageDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            min-width: 300px;
-            max-width: 500px;
-            transition: all 0.3s ease;
-            transform: translateX(100%);
-        `;
         
-        const icon = type === 'success' 
-            ? '<path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>'
-            : '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>';
-            
-        messageDiv.innerHTML = `
-            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
-                ${icon}
-            </svg>
-            ${text}
-        `;
-        
-        document.body.appendChild(messageDiv);
-        
-        // Animar entrada
-        setTimeout(() => {
-            messageDiv.style.transform = 'translateX(0)';
-        }, 100);
-        
-        // Animar salida
-        setTimeout(() => {
-            messageDiv.style.opacity = '0';
-            messageDiv.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (document.body.contains(messageDiv)) {
-                    document.body.removeChild(messageDiv);
-                }
-            }, 300);
-        }, 3000);
-    }
-
-    // Inicializar vista previa
-    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔄 Actualizando preview...');
         updatePreview();
-        
-        // Auto-focus en el primer campo
-        if (titleInput) {
-            titleInput.focus();
-        }
+    }
+}
+
+// Funciones de testing
+function testImageUrl(url) {
+    console.log('🧪 TESTING URL:', url);
+    if (imageInput) {
+        imageInput.value = url;
+        updateImagePreview();
+    } else {
+        console.error('❌ No se puede testear - imageInput no encontrado');
+    }
+}
+
+// Otras funciones del formulario
+function handleFormSubmit(event) {
+    showProcessingState();
+    return true;
+}
+
+function showProcessingState() {
+    const actionText = document.getElementById('action-text');
+    const actionLoading = document.getElementById('action-loading');
+    if (actionText) actionText.style.display = 'none';
+    if (actionLoading) actionLoading.style.display = 'inline-block';
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOM Content Loaded - Inicializando...');
+    
+    // Listar todos los inputs para debugging
+    console.log('📋 Todos los elementos de formulario:');
+    document.querySelectorAll('input, textarea, select').forEach(el => {
+        console.log(`  - Tipo: ${el.type || el.tagName}, ID: "${el.id}", Name: "${el.name}"`);
     });
+    
+    setupEventListeners();
+    updatePreview();
+    
+    if (titleInput) titleInput.focus();
+
+});
+
+// Funciones globales para testing
+window.testImage = testImageUrl;
+window.debugPreview = updateImagePreview;
+window.resetPreview = resetImagePreview;
+window.fillEx = fillExample;
 </script>
 
 <style>

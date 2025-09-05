@@ -46,13 +46,7 @@ class CrearProductoForm(forms.Form):
     
     category = forms.ChoiceField(
         label='Categoría',
-        choices=[
-            ('', 'Selecciona una categoría'),
-            ('electronics', 'Electrónicos'),
-            ('jewelery', 'Joyería'),
-            ("men's clothing", 'Ropa de Hombre'),
-            ("women's clothing", 'Ropa de Mujer'),
-        ],
+        choices=[],   # <-- ya no ponemos categorías fijas
         required=True,
         widget=forms.Select(attrs={'class': 'form-input'})
     )
