@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Platzi Fake Store{% endblock %}</title>
+    <link rel="icon" href="https://img.icons8.com/?size=100&id=tJ5aO99YHr7o&format=png&color=000000" type="image/png">
     <style>
         * {
             margin: 0;
@@ -402,7 +403,7 @@
 <body>
     <nav class="navbar">
         <div class="nav-container">
-            <a href="{% url 'productos:inicio' %}" class="logo">PRODUCTS STORE</a>
+            <a href="{% url 'productos:inicio' %}" class="logo">TIENDA DE JULIAN</a>
             <ul class="nav-menu">
                 <li><a href="{% url 'productos:inicio' %}" class="nav-link {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}">Inicio</a></li>
                 <li><a href="{% url 'productos:buscar_producto' %}" class="nav-link {% if request.resolver_match.url_name == 'buscar_producto' %}active{% endif %}">Buscar</a></li>
