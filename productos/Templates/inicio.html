@@ -67,7 +67,6 @@
                     <p style="color: var(--primary-color); font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;">${{ product.price }}</p>
                     <p style="color: var(--gray-600); margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-clamp: 3;">{{ product.description }}</p>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button onclick="viewProduct({{ product.id }})" class="btn btn-primary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.9rem;">Ver Detalles</button>
                         <a href="{% url 'productos:editar_producto' product.id %}" class="btn btn-secondary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.9rem;">
                             Editar
                         </a>
