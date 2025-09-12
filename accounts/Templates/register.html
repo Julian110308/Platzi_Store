@@ -17,14 +17,33 @@
     <!-- Mensajes de feedback -->
     {% if messages %}
         {% for message in messages %}
-            <div class="message message-{{ message.tags }}">
-                {{ message }}
+            <div class="message message-{{ message.tags }}" id="messageAlert">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span>{{ message }}</span>
+                    <button type="button" class="close-btn" onclick="this.parentElement.parentElement.style.display='none'">×</button>
+                </div>
             </div>
         {% endfor %}
     {% endif %}
 
+    <!-- Alert de éxito personalizado -->
+    <div id="successAlert" class="success-alert" style="display: none;">
+        <div class="success-content">
+            <div class="success-icon">✓</div>
+            <div class="success-text">
+                <h3>¡Cuenta creada exitosamente!</h3>
+                <p>Tu cuenta ha sido registrada correctamente. Serás redirigido al login en <span id="countdown">5</span> segundos.</p>
+            </div>
+        </div>
+        <div class="success-actions">
+            <button type="button" class="btn btn-primary" onclick="goToLogin()">
+                Ir al Login Ahora
+            </button>
+        </div>
+    </div>
+
     <!-- Formulario de registro -->
-    <div class="card">
+    <div class="card" id="registerCard">
         <form method="post" id="registerForm">
             {% csrf_token %}
 
@@ -41,9 +60,17 @@
                         name="first_name" 
                         class="form-input" 
                         placeholder="Tu nombre"
-                        value="{{ request.POST.first_name|default:'' }}"
+                        value="{{ form.first_name.value|default:'' }}"
                         autocomplete="given-name"
                     >
+                    <!-- Mostrar errores del formulario -->
+                    {% if form.first_name.errors %}
+                        <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                            {% for error in form.first_name.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
 
                 <div class="form-group">
@@ -57,9 +84,17 @@
                         name="last_name" 
                         class="form-input" 
                         placeholder="Tu apellido"
-                        value="{{ request.POST.last_name|default:'' }}"
+                        value="{{ form.last_name.value|default:'' }}"
                         autocomplete="family-name"
                     >
+                    <!-- Mostrar errores del formulario -->
+                    {% if form.last_name.errors %}
+                        <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                            {% for error in form.last_name.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -76,9 +111,17 @@
                     required
                     autocomplete="username"
                     placeholder="Elige un nombre de usuario único"
-                    value="{{ request.POST.username|default:'' }}"
+                    value="{{ form.username.value|default:'' }}"
                 >
                 <div id="usernameStatus" class="input-status"></div>
+                <!-- Mostrar errores del formulario -->
+                {% if form.username.errors %}
+                    <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                        {% for error in form.username.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
@@ -94,19 +137,27 @@
                     required
                     autocomplete="email"
                     placeholder="tu@gmail.com"
-                    value="{{ request.POST.email|default:'' }}"
+                    value="{{ form.email.value|default:'' }}"
                 >
+                <!-- Mostrar errores del formulario -->
+                {% if form.email.errors %}
+                    <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                        {% for error in form.email.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="password" class="form-label">
+                <label for="password1" class="form-label">
                     <i class="icon-lock" style="margin-right: 0.5rem;"></i>
                     Contraseña *
                 </label>
                 <input 
                     type="password" 
-                    id="password" 
-                    name="password" 
+                    id="password1" 
+                    name="password1" 
                     class="form-input" 
                     required
                     autocomplete="new-password"
@@ -114,6 +165,14 @@
                     minlength="8"
                 >
                 <div class="password-strength" id="passwordStrength"></div>
+                <!-- Mostrar errores del formulario -->
+                {% if form.password1.errors %}
+                    <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                        {% for error in form.password1.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
@@ -131,10 +190,27 @@
                     placeholder="Repite tu contraseña"
                 >
                 <div id="passwordMatch" class="input-status"></div>
+                <!-- Mostrar errores del formulario -->
+                {% if form.password2.errors %}
+                    <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                        {% for error in form.password2.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
 
+            <!-- Errores generales del formulario -->
+            {% if form.non_field_errors %}
+                <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-bottom: 1rem; padding: 0.5rem; background: var(--gray-100); border-radius: 0.25rem;">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <div class="form-group" style="margin-bottom: 2rem;">
-                <button type="submit" class="btn btn-primary" style="width: 100%; position: relative;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; position: relative;" id="submitButton">
                     <span class="btn-text">Crear Cuenta</span>
                     <div class="loading" id="registerLoader" style="display: none; margin-left: 0.5rem;"></div>
                 </button>
@@ -157,10 +233,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('registerForm');
     const registerLoader = document.getElementById('registerLoader');
     const btnText = document.querySelector('.btn-text');
+    const submitButton = document.getElementById('submitButton');
+    const registerCard = document.getElementById('registerCard');
+    const successAlert = document.getElementById('successAlert');
     
     // Elementos del formulario
     const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
+    const passwordInput = document.getElementById('password1');
     const password2Input = document.getElementById('password2');
     const usernameStatus = document.getElementById('usernameStatus');
     const passwordStrength = document.getElementById('passwordStrength');
@@ -168,121 +247,216 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Validación en tiempo real del username
     let usernameTimeout;
-    usernameInput.addEventListener('input', function() {
-        clearTimeout(usernameTimeout);
-        const username = this.value.trim();
-        
-        if (username.length >= 3) {
-            usernameTimeout = setTimeout(() => {
-                checkUsernameAvailability(username);
-            }, 500);
-        } else {
-            usernameStatus.innerHTML = '';
-        }
-    });
+    if (usernameInput) {
+        usernameInput.addEventListener('input', function() {
+            clearTimeout(usernameTimeout);
+            const username = this.value.trim();
+            
+            if (username.length >= 3) {
+                usernameTimeout = setTimeout(function() {
+                    checkUsernameAvailability(username);
+                }, 500);
+            } else {
+                if (usernameStatus) usernameStatus.innerHTML = '';
+            }
+        });
+    }
 
     // Función para verificar disponibilidad del username
     function checkUsernameAvailability(username) {
-        // En un entorno real, harías una petición AJAX a tu API
-        // Por ahora simulamos una validación básica
-        if (username.length >= 3) {
+        if (username.length >= 3 && usernameStatus) {
             usernameStatus.innerHTML = '<span style="color: var(--success-color); font-size: 0.875rem;">✓ Nombre de usuario disponible</span>';
         }
     }
 
     // Validación de fortaleza de contraseña
-    passwordInput.addEventListener('input', function() {
-        const password = this.value;
-        let strength = 0;
-        let feedback = [];
+    if (passwordInput && passwordStrength) {
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
 
-        if (password.length >= 8) strength++;
-        else feedback.push('Mínimo 8 caracteres');
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
 
-        if (/[A-Z]/.test(password)) strength++;
-        else feedback.push('Una mayúscula');
+            // Mostrar indicador de fortaleza
+            let strengthText = '';
+            let strengthColor = '';
+            
+            if (strength <= 2) {
+                strengthText = 'Débil';
+                strengthColor = 'var(--error-color)';
+            } else if (strength <= 3) {
+                strengthText = 'Media';
+                strengthColor = 'var(--warning)';
+            } else {
+                strengthText = 'Fuerte';
+                strengthColor = 'var(--success-color)';
+            }
 
-        if (/[a-z]/.test(password)) strength++;
-        else feedback.push('Una minúscula');
-
-        if (/[0-9]/.test(password)) strength++;
-        else feedback.push('Un número');
-
-        if (/[^A-Za-z0-9]/.test(password)) strength++;
-        else feedback.push('Un símbolo');
-
-        // Mostrar indicador de fortaleza
-        let strengthText = '';
-        let strengthColor = '';
-        
-        if (strength <= 2) {
-            strengthText = 'Débil';
-            strengthColor = 'var(--error-color)';
-        } else if (strength <= 3) {
-            strengthText = 'Media';
-            strengthColor = 'var(--warning)';
-        } else {
-            strengthText = 'Fuerte';
-            strengthColor = 'var(--success-color)';
-        }
-
-        if (password.length > 0) {
-            passwordStrength.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                    <div style="flex: 1; height: 4px; background: var(--gray-200); border-radius: 2px;">
-                        <div style="height: 100%; background: ${strengthColor}; width: ${(strength/5)*100}%; border-radius: 2px; transition: all 0.3s ease;"></div>
+            if (password.length > 0) {
+                passwordStrength.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                        <div style="flex: 1; height: 4px; background: var(--gray-200); border-radius: 2px;">
+                            <div style="height: 100%; background: ${strengthColor}; width: ${(strength/5)*100}%; border-radius: 2px; transition: all 0.3s ease;"></div>
+                        </div>
+                        <span style="font-size: 0.75rem; color: ${strengthColor}; font-weight: 500;">${strengthText}</span>
                     </div>
-                    <span style="font-size: 0.75rem; color: ${strengthColor}; font-weight: 500;">${strengthText}</span>
-                </div>
-            `;
-        } else {
-            passwordStrength.innerHTML = '';
-        }
-    });
+                `;
+            } else {
+                passwordStrength.innerHTML = '';
+            }
+        });
+    }
 
     // Validación de coincidencia de contraseñas
-    password2Input.addEventListener('input', function() {
-        const password = passwordInput.value;
-        const password2 = this.value;
+    if (password2Input && passwordMatch) {
+        password2Input.addEventListener('input', function() {
+            const password = passwordInput ? passwordInput.value : '';
+            const password2 = this.value;
 
-        if (password2.length > 0) {
-            if (password === password2) {
-                passwordMatch.innerHTML = '<span style="color: var(--success-color); font-size: 0.875rem;">✓ Las contraseñas coinciden</span>';
+            if (password2.length > 0) {
+                if (password === password2) {
+                    passwordMatch.innerHTML = '<span style="color: var(--success-color); font-size: 0.875rem;">✓ Las contraseñas coinciden</span>';
+                } else {
+                    passwordMatch.innerHTML = '<span style="color: var(--error-color); font-size: 0.875rem;">✗ Las contraseñas no coinciden</span>';
+                }
             } else {
-                passwordMatch.innerHTML = '<span style="color: var(--error-color); font-size: 0.875rem;">✗ Las contraseñas no coinciden</span>';
+                passwordMatch.innerHTML = '';
             }
-        } else {
-            passwordMatch.innerHTML = '';
-        }
-    });
+        });
+    }
 
-    // Envío del formulario
-    registerForm.addEventListener('submit', function(e) {
-        // Mostrar loading
-        registerLoader.style.display = 'inline-block';
-        btnText.textContent = 'Creando cuenta...';
-        
-        // Deshabilitar el botón
-        const submitBtn = registerForm.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-    });
+    // Función para mostrar éxito
+    function showSuccess() {
+        if (registerCard && successAlert) {
+            registerCard.style.display = 'none';
+            successAlert.style.display = 'block';
+            
+            // Scroll al top para asegurar que se vea el mensaje
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+            
+            // Countdown para redirección
+            let countdown = 5;
+            const countdownElement = document.getElementById('countdown');
+            
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    goToLogin();
+                }
+            }, 1000);
+        }
+    }
+
+    // Función para ir al login
+    window.goToLogin = function() {
+        window.location.href = "{% url 'accounts:login' %}";
+    };
+
+    // Envío del formulario con manejo de respuesta
+    if (registerForm && registerLoader && btnText && submitButton) {
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Evitamos el envío normal
+            
+            // Mostrar loading
+            registerLoader.style.display = 'inline-block';
+            btnText.textContent = 'Creando cuenta...';
+            submitButton.disabled = true;
+            
+            // Recopilar datos del formulario
+            const formData = new FormData(registerForm);
+            
+            // Enviar datos usando fetch
+            fetch(registerForm.action || window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.redirected) {
+                    // Si hay redirección, significa que fue exitoso
+                    showSuccess();
+                    return null;
+                }
+                return response.text();
+            })
+            .then(html => {
+                if (html) {
+                    // Si recibimos HTML, significa que hubo errores
+                    // Parseamos el HTML para extraer errores
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const errorMessages = doc.querySelectorAll('.error-message, .message-error');
+                    
+                    if (errorMessages.length > 0) {
+                        // Hay errores, recargar la página para mostrarlos
+                        window.location.reload();
+                    } else {
+                        // No hay errores específicos, podría ser un éxito
+                        showSuccess();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Resetear el botón en caso de error
+                registerLoader.style.display = 'none';
+                btnText.textContent = 'Crear Cuenta';
+                submitButton.disabled = false;
+                
+                // Mostrar mensaje de error
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message message-error';
+                errorDiv.innerHTML = 'Error de conexión. Por favor, intenta nuevamente.';
+                registerForm.insertBefore(errorDiv, registerForm.firstChild);
+            });
+        });
+    }
 
     // Animación en focus de inputs
     const inputs = document.querySelectorAll('.form-input');
-    inputs.forEach(input => {
+    inputs.forEach(function(input) {
         input.addEventListener('focus', function() {
-            this.parentElement.style.transform = 'scale(1.02)';
-            this.parentElement.style.transition = 'transform 0.3s ease';
+            if (this.parentElement) {
+                this.parentElement.style.transform = 'scale(1.02)';
+                this.parentElement.style.transition = 'transform 0.3s ease';
+            }
         });
         
         input.addEventListener('blur', function() {
-            this.parentElement.style.transform = 'scale(1)';
+            if (this.parentElement) {
+                this.parentElement.style.transform = 'scale(1)';
+            }
         });
     });
 });
 </script>
 
 <style>
+/* Variables CSS */
+:root {
+    --primary-color: #007bff;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    --warning: #ffc107;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-600: #6c757d;
+}
+
 /* Iconos para el registro */
 .icon-user::before {
     content: "👤";
@@ -300,6 +474,95 @@ document.addEventListener('DOMContentLoaded', function() {
     content: "🔒";
 }
 
+/* Alert de éxito personalizado */
+.success-alert {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 2px solid var(--success-color);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+    animation: slideInDown 0.5s ease-out;
+}
+
+.success-content {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.success-icon {
+    background: var(--success-color);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-right: 1rem;
+    animation: pulse 2s infinite;
+}
+
+.success-text h3 {
+    color: var(--success-color);
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+}
+
+.success-text p {
+    color: #155724;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.success-actions {
+    text-align: center;
+}
+
+/* Mensajes mejorados */
+.message {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-weight: 500;
+    animation: slideInDown 0.3s ease-out;
+}
+
+.message-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message-error {
+    background: linear-gradient(135deg, #f8d7da 0%, #f1aeb5 100%);
+    color: #721c24;
+    border: 1px solid #f1aeb5;
+}
+
+.message-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    color: inherit;
+    opacity: 0.7;
+}
+
+.close-btn:hover {
+    opacity: 1;
+}
+
 /* Estilos para estados de validación */
 .input-status {
     margin-top: 0.25rem;
@@ -311,11 +574,65 @@ document.addEventListener('DOMContentLoaded', function() {
     min-height: 1.5rem;
 }
 
+.error-message {
+    color: var(--error-color);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 4px;
+    border-left: 3px solid var(--error-color);
+}
+
 /* Grid responsive para nombre y apellido */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
 @media (max-width: 768px) {
     .grid-2 {
         grid-template-columns: 1fr;
     }
+}
+
+/* Botón de carga mejorado */
+.loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s ease-in-out infinite;
+}
+
+/* Animaciones */
+@keyframes slideInDown {
+    from {
+        transform: translate3d(0, -20px, 0);
+        opacity: 0;
+    }
+    to {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* Responsive para formulario */
@@ -332,11 +649,40 @@ document.addEventListener('DOMContentLoaded', function() {
         padding: 1.5rem;
         margin: 0 1rem;
     }
+    
+    .success-alert {
+        padding: 1.5rem;
+        margin: 0 1rem 2rem 1rem;
+    }
+    
+    .success-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .success-icon {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
 }
 
 /* Mejoras visuales */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
 .card:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.form-input {
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 /* Animación para campos requeridos */

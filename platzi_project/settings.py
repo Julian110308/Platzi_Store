@@ -70,6 +70,8 @@ TEMPLATES = [
     },
 ]
 
+LOGIN_URL = 'accounts:login'  # Redirige a esta URL si el usuario no está autenticado
+
 WSGI_APPLICATION = 'platzi_project.wsgi.application'
 
 
