@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesión - Tienda de Julian{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 0 auto; padding-top: 2rem;">
+    <!-- Hero section para login -->
+    <div class="hero" style="margin-bottom: 2rem; padding: 2rem;">
+        <h1 class="hero-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">
+            Iniciar Sesión
+        </h1>
+        <p class="hero-subtitle">
+            Accede a tu cuenta para continuar
+        </p>
+    </div>
+
+    <!-- Mensajes de feedback -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Formulario de login -->
+    <div class="card">
+        <form method="post" id="loginForm">
+            {% csrf_token %}
+            
+            <!-- Campo oculto para next URL -->
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+
+            <div class="form-group">
+                <label for="username" class="form-label">
+                    <i class="icon-user" style="margin-right: 0.5rem;"></i>
+                    Nombre de Usuario
+                </label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    class="form-input" 
+                    required
+                    autocomplete="username"
+                    placeholder="Ingresa tu nombre de usuario"
+                    value="{{ request.POST.username|default:'' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">
+                    <i class="icon-lock" style="margin-right: 0.5rem;"></i>
+                    Contraseña
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-input" 
+                    required
+                    autocomplete="current-password"
+                    placeholder="Ingresa tu contraseña"
+                >
+            </div>
+
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; position: relative;">
+                    <span class="btn-text">Iniciar Sesión</span>
+                    <div class="loading" id="loginLoader" style="display: none; margin-left: 0.5rem;"></div>
+                </button>
+            </div>
+
+            <div style="text-align: center; color: var(--gray-600);">
+                <p>
+                    ¿No tienes cuenta? 
+                    <a href="{% url 'accounts:register' %}" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">
+                        Regístrate aquí
+                    </a>
+                </p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const loginLoader = document.getElementById('loginLoader');
+    const btnText = document.querySelector('.btn-text');
+
+    loginForm.addEventListener('submit', function(e) {
+        // Mostrar loading
+        loginLoader.style.display = 'inline-block';
+        btnText.textContent = 'Iniciando sesión...';
+        
+        // Deshabilitar el botón para evitar múltiples envíos
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+    });
+
+    // Animación en focus de inputs
+    const inputs = document.querySelectorAll('.form-input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+            this.parentElement.style.transition = 'transform 0.3s ease';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+
+<style>
+/* Estilos específicos para el login */
+.icon-user::before {
+    content: "👤";
+}
+
+.icon-lock::before {
+    content: "🔒";
+}
+
+/* Animación hover para el card */
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Responsive específico para formulario */
+@media (max-width: 480px) {
+    .hero {
+        padding: 1.5rem 1rem;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .card {
+        padding: 1.5rem;
+        margin: 0 1rem;
+    }
+}
+</style>
+{% endblock %}
