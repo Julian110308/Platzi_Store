@@ -1,200 +1,203 @@
 {% extends 'base.html' %}
 
-{% block title %}Registro - Tienda de Julian{% endblock %}
+{% block title %}Crear Cuenta - TIENDA DE JULIAN{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto; padding-top: 2rem;">
-    <!-- Hero section para registro -->
-    <div class="hero" style="margin-bottom: 2rem; padding: 2rem;">
-        <h1 class="hero-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">
-            Crear Cuenta
-        </h1>
-        <p class="hero-subtitle">
-            Únete a nosotros y comienza a explorar
-        </p>
-    </div>
+<div class="auth-container">
+    <div class="auth-card register-card">
+        <div class="auth-header">
+            <div class="auth-icon">
+                <svg width="60" height="60" fill="var(--primary-color)" viewBox="0 0 24 24">
+                    <path d="M15,12C17.21,12 19,10.21 19,8C19,5.79 17.21,4 15,4C12.79,4 11,5.79 11,8C11,10.21 12.79,12 15,12M15,14C12.33,14 7,15.34 7,18V20H23V18C23,15.34 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10H6Z"/>
+                </svg>
+            </div>
+            <h1 class="auth-title">Crear Cuenta Nueva</h1>
+            <p class="auth-subtitle">Únete a nuestra comunidad y descubre increíbles productos</p>
+        </div>
 
-    <!-- Mensajes de feedback -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="message message-{{ message.tags }}" id="messageAlert">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <span>{{ message }}</span>
-                    <button type="button" class="close-btn" onclick="this.parentElement.parentElement.style.display='none'">×</button>
+        <!-- Mostrar mensajes de error o éxito -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message message-{{ message.tags }}">
+                    {{ message }}
                 </div>
-            </div>
-        {% endfor %}
-    {% endif %}
+            {% endfor %}
+        {% endif %}
 
-    <!-- Alert de éxito personalizado -->
-    <div id="successAlert" class="success-alert" style="display: none;">
-        <div class="success-content">
-            <div class="success-icon">✓</div>
-            <div class="success-text">
-                <h3>¡Cuenta creada exitosamente!</h3>
-                <p>Tu cuenta ha sido registrada correctamente. Serás redirigido al login en <span id="countdown">5</span> segundos.</p>
-            </div>
-        </div>
-        <div class="success-actions">
-            <button type="button" class="btn btn-primary" onclick="goToLogin()">
-                Ir al Login Ahora
-            </button>
-        </div>
-    </div>
-
-    <!-- Formulario de registro -->
-    <div class="card" id="registerCard">
-        <form method="post" id="registerForm">
+        <form method="post" class="auth-form" id="registerForm" novalidate>
             {% csrf_token %}
 
-            <!-- Grid para nombre y apellido -->
-            <div class="grid grid-2" style="gap: 1rem;">
-                <div class="form-group">
-                    <label for="first_name" class="form-label">
-                        <i class="icon-user" style="margin-right: 0.5rem;"></i>
-                        Nombre
-                    </label>
-                    <input 
-                        type="text" 
-                        id="first_name" 
-                        name="first_name" 
-                        class="form-input" 
-                        placeholder="Tu nombre"
-                        value="{{ form.first_name.value|default:'' }}"
-                        autocomplete="given-name"
-                    >
-                    <!-- Mostrar errores del formulario -->
-                    {% if form.first_name.errors %}
-                        <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
-                            {% for error in form.first_name.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="last_name" class="form-label">
-                        <i class="icon-user" style="margin-right: 0.5rem;"></i>
-                        Apellido
-                    </label>
-                    <input 
-                        type="text" 
-                        id="last_name" 
-                        name="last_name" 
-                        class="form-input" 
-                        placeholder="Tu apellido"
-                        value="{{ form.last_name.value|default:'' }}"
-                        autocomplete="family-name"
-                    >
-                    <!-- Mostrar errores del formulario -->
-                    {% if form.last_name.errors %}
-                        <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
-                            {% for error in form.last_name.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
+            <!-- Campo Username -->
             <div class="form-group">
-                <label for="username" class="form-label">
-                    <i class="icon-at" style="margin-right: 0.5rem;"></i>
-                    Nombre de Usuario *
+                <label for="{{ form.username.id_for_label }}" class="form-label">
+                    {{ form.username.label }}
                 </label>
-                <input 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    class="form-input" 
-                    required
-                    autocomplete="username"
-                    placeholder="Elige un nombre de usuario único"
-                    value="{{ form.username.value|default:'' }}"
-                >
-                <div id="usernameStatus" class="input-status"></div>
-                <!-- Mostrar errores del formulario -->
+                <div class="input-with-icon">
+                    <svg class="input-icon" width="20" height="20" fill="var(--gray-600)" viewBox="0 0 24 24">
+                        <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                    </svg>
+                    <input type="text" 
+                           name="{{ form.username.name }}" 
+                           id="{{ form.username.id_for_label }}" 
+                           class="form-input"
+                           placeholder="Ingresa tu nombre de usuario"
+                           {% if form.username.value %}value="{{ form.username.value }}"{% endif %}
+                           required>
+                </div>
                 {% if form.username.errors %}
-                    <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                    <div class="form-errors">
                         {% for error in form.username.errors %}
-                            {{ error }}
+                            <span class="error-text">{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% endif %}
+                <div class="form-help">
+                    Mínimo 3 caracteres, solo letras, números y @/./+/-/_
+                </div>
             </div>
 
+            <!-- Campo Email -->
             <div class="form-group">
-                <label for="email" class="form-label">
-                    <i class="icon-mail" style="margin-right: 0.5rem;"></i>
-                    Correo Electrónico *
+                <label for="{{ form.email.id_for_label }}" class="form-label">
+                    {{ form.email.label }}
                 </label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    class="form-input" 
-                    required
-                    autocomplete="email"
-                    placeholder="tu@gmail.com"
-                    value="{{ form.email.value|default:'' }}"
-                >
-                <!-- Mostrar errores del formulario -->
+                <div class="input-with-icon">
+                    <svg class="input-icon" width="20" height="20" fill="var(--gray-600)" viewBox="0 0 24 24">
+                        <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/>
+                    </svg>
+                    <input type="email" 
+                           name="{{ form.email.name }}" 
+                           id="{{ form.email.id_for_label }}" 
+                           class="form-input"
+                           placeholder="tu@email.com"
+                           {% if form.email.value %}value="{{ form.email.value }}"{% endif %}
+                           required>
+                </div>
                 {% if form.email.errors %}
-                    <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                    <div class="form-errors">
                         {% for error in form.email.errors %}
-                            {{ error }}
+                            <span class="error-text">{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% endif %}
             </div>
 
+            <!-- Campos Nombre y Apellido -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                        {{ form.first_name.label }}
+                    </label>
+                    <div class="input-with-icon">
+                        <svg class="input-icon" width="20" height="20" fill="var(--gray-600)" viewBox="0 0 24 24">
+                            <path d="M22,3H2C0.91,3.04 0.04,3.91 0,5V19C0.04,20.09 0.91,20.96 2,21H22C23.09,20.96 23.96,20.09 24,19V5C23.96,3.91 23.09,3.04 22,3M22,19H2V5H22V19Z"/>
+                        </svg>
+                        <input type="text" 
+                               name="{{ form.first_name.name }}" 
+                               id="{{ form.first_name.id_for_label }}" 
+                               class="form-input"
+                               placeholder="Tu nombre"
+                               {% if form.first_name.value %}value="{{ form.first_name.value }}"{% endif %}>
+                    </div>
+                    {% if form.first_name.errors %}
+                        <div class="form-errors">
+                            {% for error in form.first_name.errors %}
+                                <span class="error-text">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                        {{ form.last_name.label }}
+                    </label>
+                    <div class="input-with-icon">
+                        <svg class="input-icon" width="20" height="20" fill="var(--gray-600)" viewBox="0 0 24 24">
+                            <path d="M22,3H2C0.91,3.04 0.04,3.91 0,5V19C0.04,20.09 0.91,20.96 2,21H22C23.09,20.96 23.96,20.09 24,19V5C23.96,3.91 23.09,3.04 22,3M22,19H2V5H22V19Z"/>
+                        </svg>
+                        <input type="text" 
+                               name="{{ form.last_name.name }}" 
+                               id="{{ form.last_name.id_for_label }}" 
+                               class="form-input"
+                               placeholder="Tu apellido"
+                               {% if form.last_name.value %}value="{{ form.last_name.value }}"{% endif %}>
+                    </div>
+                    {% if form.last_name.errors %}
+                        <div class="form-errors">
+                            {% for error in form.last_name.errors %}
+                                <span class="error-text">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Campo Contraseña -->
             <div class="form-group">
-                <label for="password1" class="form-label">
-                    <i class="icon-lock" style="margin-right: 0.5rem;"></i>
-                    Contraseña *
+                <label for="{{ form.password1.id_for_label }}" class="form-label">
+                    {{ form.password1.label }}
                 </label>
-                <input 
-                    type="password" 
-                    id="password1" 
-                    name="password1" 
-                    class="form-input" 
-                    required
-                    autocomplete="new-password"
-                    placeholder="Mínimo 8 caracteres"
-                    minlength="8"
-                >
-                <div class="password-strength" id="passwordStrength"></div>
-                <!-- Mostrar errores del formulario -->
+                <div class="input-with-icon">
+                    <svg class="input-icon" width="20" height="20" fill="var(--gray-600)" viewBox="0 0 24 24">
+                        <path d="M18,8H17V6A5,5 0 0,0 12,1A5,5 0 0,0 7,6V8H6A2,2 0 0,0 4,10V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M12,17A2,2 0 0,1 10,15A2,2 0 0,1 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17M15.1,8H8.9V6A3.1,3.1 0 0,1 12,2.9A3.1,3.1 0 0,1 15.1,6V8Z"/>
+                    </svg>
+                    <input type="password" 
+                           name="{{ form.password1.name }}" 
+                           id="{{ form.password1.id_for_label }}" 
+                           class="form-input"
+                           placeholder="Mínimo 8 caracteres"
+                           required>
+                    <button type="button" class="password-toggle" id="togglePassword1">
+                        <svg class="eye-icon" width="20" height="20" fill="var(--gray-600)" viewBox="0 0 24 24">
+                            <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Indicador de fortaleza de contraseña -->
+                <div class="password-strength">
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <div class="strength-text" id="strengthText">Ingresa una contraseña</div>
+                </div>
+                
                 {% if form.password1.errors %}
-                    <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                    <div class="form-errors">
                         {% for error in form.password1.errors %}
-                            {{ error }}
+                            <span class="error-text">{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% endif %}
             </div>
 
+            <!-- Campo Confirmar Contraseña -->
             <div class="form-group">
-                <label for="password2" class="form-label">
-                    <i class="icon-lock" style="margin-right: 0.5rem;"></i>
-                    Confirmar Contraseña *
+                <label for="{{ form.password2.id_for_label }}" class="form-label">
+                    {{ form.password2.label }}
                 </label>
-                <input 
-                    type="password" 
-                    id="password2" 
-                    name="password2" 
-                    class="form-input" 
-                    required
-                    autocomplete="new-password"
-                    placeholder="Repite tu contraseña"
-                >
-                <div id="passwordMatch" class="input-status"></div>
-                <!-- Mostrar errores del formulario -->
+                <div class="input-with-icon">
+                    <svg class="input-icon" width="20" height="20" fill="var(--gray-600)" viewBox="0 0 24 24">
+                        <path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9M10.5,16L12,17.5L15.5,14L17,15.5L12,20.5L9,17.5L10.5,16M20,16V4H4V16H8V21L11,18H20Z"/>
+                    </svg>
+                    <input type="password" 
+                           name="{{ form.password2.name }}" 
+                           id="{{ form.password2.id_for_label }}" 
+                           class="form-input"
+                           placeholder="Confirma tu contraseña"
+                           required>
+                    <button type="button" class="password-toggle" id="togglePassword2">
+                        <svg class="eye-icon" width="20" height="20" fill="var(--gray-600)" viewBox="0 0 24 24">
+                            <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="passwordMatch" class="form-help"></div>
                 {% if form.password2.errors %}
-                    <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                    <div class="form-errors">
                         {% for error in form.password2.errors %}
-                            {{ error }}
+                            <span class="error-text">{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% endif %}
@@ -202,493 +205,488 @@
 
             <!-- Errores generales del formulario -->
             {% if form.non_field_errors %}
-                <div class="error-message" style="color: var(--error-color); font-size: 0.875rem; margin-bottom: 1rem; padding: 0.5rem; background: var(--gray-100); border-radius: 0.25rem;">
+                <div class="message message-error">
                     {% for error in form.non_field_errors %}
                         {{ error }}
                     {% endfor %}
                 </div>
             {% endif %}
 
-            <div class="form-group" style="margin-bottom: 2rem;">
-                <button type="submit" class="btn btn-primary" style="width: 100%; position: relative;" id="submitButton">
-                    <span class="btn-text">Crear Cuenta</span>
-                    <div class="loading" id="registerLoader" style="display: none; margin-left: 0.5rem;"></div>
-                </button>
+            <!-- Términos y condiciones -->
+            <div class="form-group">
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" id="acceptTerms" required>
+                    <span class="checkbox-checkmark"></span>
+                    Acepto los <a href="#" class="terms-link">términos y condiciones</a> y la 
+                    <a href="#" class="terms-link">política de privacidad</a>
+                </label>
             </div>
 
-            <div style="text-align: center; color: var(--gray-600);">
-                <p>
-                    ¿Ya tienes cuenta? 
-                    <a href="{% url 'accounts:login' %}" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">
-                        Inicia sesión aquí
-                    </a>
-                </p>
+            <!-- Botón de registro -->
+            <button type="submit" class="btn btn-primary auth-btn" id="submitBtn">
+                <span class="btn-spinner" id="spinner" style="display: none;">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z"/>
+                    </svg>
+                </span>
+                <svg class="btn-icon" id="submitIcon" width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                    <path d="M15,12C17.21,12 19,10.21 19,8C19,5.79 17.21,4 15,4C12.79,4 11,5.79 11,8C11,10.21 12.79,12 15,12M15,14C12.33,14 7,15.34 7,18V20H23V18C23,15.34 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10H6Z"/>
+                </svg>
+                <span id="submitText">Crear Mi Cuenta</span>
+            </button>
+
+            <!-- Enlaces adicionales -->
+            <div class="auth-footer">
+                <p>¿Ya tienes una cuenta?</p>
+                <a href="{% url 'accounts:login' %}" class="auth-link">
+                    Iniciar Sesión
+                </a>
             </div>
         </form>
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const registerForm = document.getElementById('registerForm');
-    const registerLoader = document.getElementById('registerLoader');
-    const btnText = document.querySelector('.btn-text');
-    const submitButton = document.getElementById('submitButton');
-    const registerCard = document.getElementById('registerCard');
-    const successAlert = document.getElementById('successAlert');
-    
-    // Elementos del formulario
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password1');
-    const password2Input = document.getElementById('password2');
-    const usernameStatus = document.getElementById('usernameStatus');
-    const passwordStrength = document.getElementById('passwordStrength');
-    const passwordMatch = document.getElementById('passwordMatch');
-
-    // Validación en tiempo real del username
-    let usernameTimeout;
-    if (usernameInput) {
-        usernameInput.addEventListener('input', function() {
-            clearTimeout(usernameTimeout);
-            const username = this.value.trim();
-            
-            if (username.length >= 3) {
-                usernameTimeout = setTimeout(function() {
-                    checkUsernameAvailability(username);
-                }, 500);
-            } else {
-                if (usernameStatus) usernameStatus.innerHTML = '';
-            }
-        });
-    }
-
-    // Función para verificar disponibilidad del username
-    function checkUsernameAvailability(username) {
-        if (username.length >= 3 && usernameStatus) {
-            usernameStatus.innerHTML = '<span style="color: var(--success-color); font-size: 0.875rem;">✓ Nombre de usuario disponible</span>';
-        }
-    }
-
-    // Validación de fortaleza de contraseña
-    if (passwordInput && passwordStrength) {
-        passwordInput.addEventListener('input', function() {
-            const password = this.value;
-            let strength = 0;
-
-            if (password.length >= 8) strength++;
-            if (/[A-Z]/.test(password)) strength++;
-            if (/[a-z]/.test(password)) strength++;
-            if (/[0-9]/.test(password)) strength++;
-            if (/[^A-Za-z0-9]/.test(password)) strength++;
-
-            // Mostrar indicador de fortaleza
-            let strengthText = '';
-            let strengthColor = '';
-            
-            if (strength <= 2) {
-                strengthText = 'Débil';
-                strengthColor = 'var(--error-color)';
-            } else if (strength <= 3) {
-                strengthText = 'Media';
-                strengthColor = 'var(--warning)';
-            } else {
-                strengthText = 'Fuerte';
-                strengthColor = 'var(--success-color)';
-            }
-
-            if (password.length > 0) {
-                passwordStrength.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                        <div style="flex: 1; height: 4px; background: var(--gray-200); border-radius: 2px;">
-                            <div style="height: 100%; background: ${strengthColor}; width: ${(strength/5)*100}%; border-radius: 2px; transition: all 0.3s ease;"></div>
-                        </div>
-                        <span style="font-size: 0.75rem; color: ${strengthColor}; font-weight: 500;">${strengthText}</span>
-                    </div>
-                `;
-            } else {
-                passwordStrength.innerHTML = '';
-            }
-        });
-    }
-
-    // Validación de coincidencia de contraseñas
-    if (password2Input && passwordMatch) {
-        password2Input.addEventListener('input', function() {
-            const password = passwordInput ? passwordInput.value : '';
-            const password2 = this.value;
-
-            if (password2.length > 0) {
-                if (password === password2) {
-                    passwordMatch.innerHTML = '<span style="color: var(--success-color); font-size: 0.875rem;">✓ Las contraseñas coinciden</span>';
-                } else {
-                    passwordMatch.innerHTML = '<span style="color: var(--error-color); font-size: 0.875rem;">✗ Las contraseñas no coinciden</span>';
-                }
-            } else {
-                passwordMatch.innerHTML = '';
-            }
-        });
-    }
-
-    // Función para mostrar éxito
-    function showSuccess() {
-        if (registerCard && successAlert) {
-            registerCard.style.display = 'none';
-            successAlert.style.display = 'block';
-            
-            // Scroll al top para asegurar que se vea el mensaje
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-            
-            // Countdown para redirección
-            let countdown = 5;
-            const countdownElement = document.getElementById('countdown');
-            
-            const countdownInterval = setInterval(() => {
-                countdown--;
-                if (countdownElement) {
-                    countdownElement.textContent = countdown;
-                }
-                
-                if (countdown <= 0) {
-                    clearInterval(countdownInterval);
-                    goToLogin();
-                }
-            }, 1000);
-        }
-    }
-
-    // Función para ir al login
-    window.goToLogin = function() {
-        window.location.href = "{% url 'accounts:login' %}";
-    };
-
-    // Envío del formulario con manejo de respuesta
-    if (registerForm && registerLoader && btnText && submitButton) {
-        registerForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Evitamos el envío normal
-            
-            // Mostrar loading
-            registerLoader.style.display = 'inline-block';
-            btnText.textContent = 'Creando cuenta...';
-            submitButton.disabled = true;
-            
-            // Recopilar datos del formulario
-            const formData = new FormData(registerForm);
-            
-            // Enviar datos usando fetch
-            fetch(registerForm.action || window.location.href, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                }
-            })
-            .then(response => {
-                if (response.redirected) {
-                    // Si hay redirección, significa que fue exitoso
-                    showSuccess();
-                    return null;
-                }
-                return response.text();
-            })
-            .then(html => {
-                if (html) {
-                    // Si recibimos HTML, significa que hubo errores
-                    // Parseamos el HTML para extraer errores
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const errorMessages = doc.querySelectorAll('.error-message, .message-error');
-                    
-                    if (errorMessages.length > 0) {
-                        // Hay errores, recargar la página para mostrarlos
-                        window.location.reload();
-                    } else {
-                        // No hay errores específicos, podría ser un éxito
-                        showSuccess();
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                // Resetear el botón en caso de error
-                registerLoader.style.display = 'none';
-                btnText.textContent = 'Crear Cuenta';
-                submitButton.disabled = false;
-                
-                // Mostrar mensaje de error
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'message message-error';
-                errorDiv.innerHTML = 'Error de conexión. Por favor, intenta nuevamente.';
-                registerForm.insertBefore(errorDiv, registerForm.firstChild);
-            });
-        });
-    }
-
-    // Animación en focus de inputs
-    const inputs = document.querySelectorAll('.form-input');
-    inputs.forEach(function(input) {
-        input.addEventListener('focus', function() {
-            if (this.parentElement) {
-                this.parentElement.style.transform = 'scale(1.02)';
-                this.parentElement.style.transition = 'transform 0.3s ease';
-            }
-        });
-        
-        input.addEventListener('blur', function() {
-            if (this.parentElement) {
-                this.parentElement.style.transform = 'scale(1)';
-            }
-        });
-    });
-});
-</script>
-
 <style>
-/* Variables CSS */
-:root {
-    --primary-color: #007bff;
-    --success-color: #28a745;
-    --error-color: #dc3545;
-    --warning: #ffc107;
-    --gray-100: #f8f9fa;
-    --gray-200: #e9ecef;
-    --gray-600: #6c757d;
-}
-
-/* Iconos para el registro */
-.icon-user::before {
-    content: "👤";
-}
-
-.icon-at::before {
-    content: "@";
-}
-
-.icon-mail::before {
-    content: "📧";
-}
-
-.icon-lock::before {
-    content: "🔒";
-}
-
-/* Alert de éxito personalizado */
-.success-alert {
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-    border: 2px solid var(--success-color);
-    border-radius: 12px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
-    animation: slideInDown 0.5s ease-out;
-}
-
-.success-content {
+.auth-container {
     display: flex;
+    justify-content: center;
     align-items: center;
-    margin-bottom: 1.5rem;
+    min-height: calc(100vh - 140px);
+    padding: 2rem 0;
 }
 
-.success-icon {
-    background: var(--success-color);
-    color: white;
-    width: 50px;
-    height: 50px;
+.register-card {
+    max-width: 550px;
+}
+
+.auth-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 3rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-right: 1rem;
-    animation: pulse 2s infinite;
+    margin: 0 auto 1.5rem;
 }
 
-.success-text h3 {
-    color: var(--success-color);
-    margin: 0 0 0.5rem 0;
-    font-size: 1.25rem;
+.auth-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
 }
 
-.success-text p {
-    color: #155724;
-    margin: 0;
-    font-size: 0.95rem;
+.auth-subtitle {
+    color: var(--gray-600);
+    font-size: 1.1rem;
 }
 
-.success-actions {
-    text-align: center;
+.auth-form {
+    margin-top: 1.5rem;
 }
 
-/* Mensajes mejorados */
-.message {
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    font-weight: 500;
-    animation: slideInDown 0.3s ease-out;
-}
-
-.message-success {
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.message-error {
-    background: linear-gradient(135deg, #f8d7da 0%, #f1aeb5 100%);
-    color: #721c24;
-    border: 1px solid #f1aeb5;
-}
-
-.message-warning {
-    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-    color: #856404;
-    border: 1px solid #ffeaa7;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0;
-    color: inherit;
-    opacity: 0.7;
-}
-
-.close-btn:hover {
-    opacity: 1;
-}
-
-/* Estilos para estados de validación */
-.input-status {
-    margin-top: 0.25rem;
-    min-height: 1.25rem;
-}
-
-.password-strength {
-    margin-top: 0.25rem;
-    min-height: 1.5rem;
-}
-
-.error-message {
-    color: var(--error-color);
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    background: rgba(220, 53, 69, 0.1);
-    border-radius: 4px;
-    border-left: 3px solid var(--error-color);
-}
-
-/* Grid responsive para nombre y apellido */
-.grid-2 {
+.form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 }
 
-@media (max-width: 768px) {
-    .grid-2 {
-        grid-template-columns: 1fr;
-    }
+.form-group {
+    margin-bottom: 1.5rem;
 }
 
-/* Botón de carga mejorado */
-.loading {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #ffffff;
-    border-radius: 50%;
-    border-top-color: transparent;
-    animation: spin 1s ease-in-out infinite;
+.form-label {
+    display: block;
+    font-weight: 500;
+    color: var(--gray-800);
+    margin-bottom: 0.5rem;
 }
 
-/* Animaciones */
-@keyframes slideInDown {
-    from {
-        transform: translate3d(0, -20px, 0);
-        opacity: 0;
-    }
-    to {
-        transform: translate3d(0, 0, 0);
-        opacity: 1;
-    }
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
 }
 
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* Responsive para formulario */
-@media (max-width: 480px) {
-    .hero {
-        padding: 1.5rem 1rem;
-    }
-    
-    .hero-title {
-        font-size: 2rem;
-    }
-    
-    .card {
-        padding: 1.5rem;
-        margin: 0 1rem;
-    }
-    
-    .success-alert {
-        padding: 1.5rem;
-        margin: 0 1rem 2rem 1rem;
-    }
-    
-    .success-content {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .success-icon {
-        margin-right: 0;
-        margin-bottom: 1rem;
-    }
-}
-
-/* Mejoras visuales */
-.card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    z-index: 1;
 }
 
 .form-input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 3rem;
+    border: 2px solid var(--gray-300);
+    border-radius: 12px;
+    font-size: 1rem;
     transition: all 0.3s ease;
+    background: var(--white);
 }
 
 .form-input:focus {
-    transform: scale(1.02);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-/* Animación para campos requeridos */
-.form-label:has(+ input[required])::after {
-    content: " *";
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-strength {
+    margin-top: 0.5rem;
+}
+
+.strength-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--gray-200);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.strength-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.strength-weak {
+    background: var(--error-color);
+    width: 33%;
+}
+
+.strength-medium {
+    background: var(--warning-color);
+    width: 66%;
+}
+
+.strength-strong {
+    background: var(--success-color);
+    width: 100%;
+}
+
+.strength-text {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+.form-help {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-top: 0.25rem;
+}
+
+.form-errors {
+    margin-top: 0.5rem;
+}
+
+.error-text {
     color: var(--error-color);
+    font-size: 0.875rem;
+    display: block;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--gray-700);
+    position: relative;
+    padding-left: 2rem;
+    min-height: 1.5rem;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.checkbox-checkmark {
+    position: absolute;
+    left: 0;
+    height: 1.25rem;
+    width: 1.25rem;
+    background-color: var(--white);
+    border: 2px solid var(--gray-300);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked ~ .checkbox-checkmark {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.checkbox-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked ~ .checkbox-checkmark:after {
+    display: block;
+}
+
+.terms-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.terms-link:hover {
+    text-decoration: underline;
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1.5rem;
+    border-radius: 12px;
+    position: relative;
+}
+
+.btn-spinner {
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+    color: var(--gray-600);
+}
+
+.auth-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    display: inline-block;
+}
+
+.auth-link:hover {
+    text-decoration: underline;
+}
+
+.message {
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.message-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error-color);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.message-success {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 2rem;
+        margin: 1rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .auth-title {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 1.5rem;
+    }
+    
+    .auth-title {
+        font-size: 1.5rem;
+    }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility
+    const togglePassword1 = document.getElementById('togglePassword1');
+    const togglePassword2 = document.getElementById('togglePassword2');
+    const password1 = document.getElementById('{{ form.password1.id_for_label }}');
+    const password2 = document.getElementById('{{ form.password2.id_for_label }}');
+    
+    if (togglePassword1 && password1) {
+        togglePassword1.addEventListener('click', function() {
+            const type = password1.getAttribute('type') === 'password' ? 'text' : 'password';
+            password1.setAttribute('type', type);
+            togglePassword1.querySelector('.eye-icon').style.opacity = type === 'text' ? '0.7' : '1';
+        });
+    }
+    
+    if (togglePassword2 && password2) {
+        togglePassword2.addEventListener('click', function() {
+            const type = password2.getAttribute('type') === 'password' ? 'text' : 'password';
+            password2.setAttribute('type', type);
+            togglePassword2.querySelector('.eye-icon').style.opacity = type === 'text' ? '0.7' : '1';
+        });
+    }
+    
+    // Password strength indicator
+    if (password1) {
+        password1.addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+        });
+    }
+    
+    // Password confirmation check
+    if (password1 && password2) {
+        password2.addEventListener('input', function() {
+            checkPasswordMatch(password1.value, this.value);
+        });
+    }
+    
+    // Form submission
+    const form = document.getElementById('registerForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            const spinner = document.getElementById('spinner');
+            const submitIcon = document.getElementById('submitIcon');
+            const submitText = document.getElementById('submitText');
+            
+            if (submitBtn && spinner && submitIcon && submitText) {
+                submitBtn.disabled = true;
+                spinner.style.display = 'inline-block';
+                submitIcon.style.display = 'none';
+                submitText.textContent = 'Creando cuenta...';
+            }
+        });
+    }
+});
+
+function checkPasswordStrength(password) {
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthText = document.getElementById('strengthText');
+    
+    if (!strengthFill || !strengthText) return;
+    
+    let strength = 0;
+    let message = '';
+    let strengthClass = '';
+    
+    if (password.length === 0) {
+        message = 'Ingresa una contraseña';
+        strengthClass = '';
+    } else if (password.length < 8) {
+        message = 'Muy corta';
+        strengthClass = 'strength-weak';
+    } else {
+        // Check for other strength criteria
+        if (/[A-Z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+        if (/[^A-Za-z0-9]/.test(password)) strength++;
+        
+        if (password.length > 10) strength++;
+        
+        if (strength < 2) {
+            message = 'Débil';
+            strengthClass = 'strength-weak';
+        } else if (strength < 4) {
+            message = 'Mediana';
+            strengthClass = 'strength-medium';
+        } else {
+            message = 'Fuerte';
+            strengthClass = 'strength-strong';
+        }
+    }
+    
+    strengthFill.className = 'strength-fill ' + strengthClass;
+    strengthText.textContent = message;
+    strengthText.style.color = strengthClass === 'strength-weak' ? 'var(--error-color)' : 
+                              strengthClass === 'strength-medium' ? 'var(--warning-color)' : 
+                              strengthClass === 'strength-strong' ? 'var(--success-color)' : 'var(--gray-600)';
+}
+
+function checkPasswordMatch(password1, password2) {
+    const matchElement = document.getElementById('passwordMatch');
+    if (!matchElement) return;
+    
+    if (password2.length === 0) {
+        matchElement.textContent = '';
+    } else if (password1 === password2) {
+        matchElement.textContent = 'Las contraseñas coinciden';
+        matchElement.style.color = 'var(--success-color)';
+    } else {
+        matchElement.textContent = 'Las contraseñas no coinciden';
+        matchElement.style.color = 'var(--error-color)';
+    }
+}
+</script>
 {% endblock %}

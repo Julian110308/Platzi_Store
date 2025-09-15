@@ -1,7 +1,6 @@
 from django import forms
 from django.core.validators import URLValidator, MinValueValidator
 from django.core.exceptions import ValidationError
-import re
 
 class BuscarProductoForm(forms.Form):
     product_id = forms.IntegerField(
@@ -46,7 +45,13 @@ class CrearProductoForm(forms.Form):
     
     category = forms.ChoiceField(
         label='Categoría',
-        choices=[],   # <-- ya no ponemos categorías fijas
+        choices=[
+            ('', 'Selecciona una categoría'),
+            ('electronics', 'Electrónicos'),
+            ('jewelery', 'Joyería'),
+            ("men's clothing", 'Ropa de Hombre'),
+            ("women's clothing", 'Ropa de Mujer'),
+        ],
         required=True,
         widget=forms.Select(attrs={'class': 'form-input'})
     )

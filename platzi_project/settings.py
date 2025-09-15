@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+API_BASE_URL = "http://127.0.0.1:8000/accounts/api/"
+
 
 # Application definition
 
@@ -194,3 +196,7 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# Configuración de encoding para evitar problemas de caracteres
+DEFAULT_CHARSET = 'utf-8'
+FILE_CHARSET = 'utf-8'
