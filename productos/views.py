@@ -6,7 +6,6 @@ from django.http import HttpResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
-@login_required
 def inicio(request):
     base_url = 'https://api.escuelajs.co/api/v1/products'
     products_data = []
