@@ -215,6 +215,7 @@ def check_username_api(request):
         'message': 'Nombre de usuario no disponible' if exists else 'Nombre de usuario disponible'
     }, status=status.HTTP_200_OK)
 
+
 @csrf_protect
 @never_cache
 def register_view(request):
@@ -253,6 +254,14 @@ def register_view(request):
                     # Registro exitoso
                     response_data = response.json()
                     
+                    # Verificar si el usuario ya existe localmente
+                    if User.objects.filter(username=user_data['username']).exists():
+                        messages.success(
+                            request, 
+                            f'¡Registro exitoso! Bienvenido {user_data["first_name"]}. Ya puedes iniciar sesión.'
+                        )
+                        return redirect('accounts:login')
+                    
                     # Crear usuario localmente en Django
                     try:
                         user = User.objects.create_user(
@@ -260,8 +269,7 @@ def register_view(request):
                             email=user_data['email'],
                             first_name=user_data['first_name'],
                             last_name=user_data['last_name'],
-                            password=user_data['password'],
-                            password2=user_data['password2']
+                            password=user_data['password']
                         )
                         messages.success(
                             request, 
@@ -270,21 +278,30 @@ def register_view(request):
                         return redirect('accounts:login')
                     
                     except Exception as e:
-                        messages.error(request, 'Error al crear usuario local. Intenta iniciar sesión.')
+                        # Si falla la creación local, el usuario igual puede iniciar sesión
+                        messages.warning(
+                            request, 
+                            f'Registro completado. Por favor, inicia sesión con tus credenciales.'
+                        )
                         return redirect('accounts:login')
                         
                 elif response.status_code == 400:
                     # Error en el registro - procesar errores específicos
                     try:
                         error_data = response.json()
-                        if 'username' in error_data:
-                            form.add_error('username', error_data['username'][0])
-                        elif 'email' in error_data:
-                            form.add_error('email', error_data['email'][0])
-                        elif 'error' in error_data:
-                            form.add_error(None, error_data['error'])
-                        else:
-                            form.add_error(None, 'Error en el registro. Verifica tus datos.')
+                        errors = error_data.get('errors', {})
+                        
+                        if 'username' in errors:
+                            form.add_error('username', errors['username'][0] if isinstance(errors['username'], list) else errors['username'])
+                        if 'email' in errors:
+                            form.add_error('email', errors['email'][0] if isinstance(errors['email'], list) else errors['email'])
+                        if 'password' in errors:
+                            form.add_error('password1', errors['password'][0] if isinstance(errors['password'], list) else errors['password'])
+                        
+                        # Si no hay errores específicos de campos
+                        if not errors:
+                            error_message = error_data.get('message', 'Error en el registro. Verifica tus datos.')
+                            form.add_error(None, error_message)
                     except:
                         form.add_error(None, 'Error en el servidor. Intenta más tarde.')
                 else:
@@ -315,92 +332,88 @@ def login_view(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             
-            # Datos para enviar a la API
-            login_data = {
-                'username': username,
-                'password': password,
-            }
+            # Intentar autenticar localmente primero
+            user = authenticate(request, username=username, password=password)
             
-            try:
-                # Llamada a la API de login
-                response = requests.post(
-                    f"{API_BASE_URL}login/",
-                    json=login_data,
-                    headers={
-                        'Content-Type': 'application/json'
-                    },
-                    timeout=10
+            if user and user.is_active:
+                # Usuario autenticado localmente
+                login(request, user)
+                messages.success(
+                    request, 
+                    f'¡Bienvenido de nuevo, {user.first_name or user.username}!'
                 )
                 
-                if response.status_code == 200:
-                    # Login exitoso en la API
-                    response_data = response.json()
+                # Opcional: sincronizar con la API
+                try:
+                    login_data = {'username': username, 'password': password}
+                    response = requests.post(
+                        f"{API_BASE_URL}login/",
+                        json=login_data,
+                        headers={'Content-Type': 'application/json'},
+                        timeout=5
+                    )
                     
-                    # Intentar autenticar localmente en Django
-                    user = authenticate(request, username=username, password=password)
+                    if response.status_code == 200:
+                        response_data = response.json()
+                        if 'token' in response_data:
+                            request.session['api_token'] = response_data['token']
+                except:
+                    pass  # Si falla la API, continuar con login local
+                
+                next_url = request.GET.get('next', 'productos:inicio')
+                return redirect(next_url)
+            else:
+                # Si falla localmente, intentar con la API
+                login_data = {'username': username, 'password': password}
+                
+                try:
+                    response = requests.post(
+                        f"{API_BASE_URL}login/",
+                        json=login_data,
+                        headers={'Content-Type': 'application/json'},
+                        timeout=10
+                    )
                     
-                    if user and user.is_active:
-                        # Usuario existe localmente y está activo
-                        login(request, user)
-                        messages.success(
-                            request, 
-                            f'¡Bienvenido de nuevo, {user.first_name or user.username}!'
-                        )
+                    if response.status_code == 200:
+                        response_data = response.json()
                         
-                        # Guardar token en sesión si está disponible
-                        if 'access_token' in response_data:
-                            request.session['api_token'] = response_data['access_token']
-                            request.session['refresh_token'] = response_data.get('refresh_token', '')
-                        
-                        # Redirigir a donde el usuario quería ir originalmente
-                        next_url = request.GET.get('next', 'productos:inicio')
-                        return redirect(next_url)
-                    else:
-                        # El usuario existe en la API pero no localmente, crearlo
+                        # Crear usuario localmente si no existe
                         try:
-                            user_info = response_data.get('user', {})
-                            user = User.objects.create_user(
+                            user, created = User.objects.get_or_create(
                                 username=username,
-                                email=user_info.get('email', ''),
-                                first_name=user_info.get('first_name', ''),
-                                last_name=user_info.get('last_name', '')
+                                defaults={
+                                    'email': response_data.get('user', {}).get('email', ''),
+                                    'first_name': response_data.get('user', {}).get('first_name', ''),
+                                    'last_name': response_data.get('user', {}).get('last_name', '')
+                                }
                             )
-                            user.set_password(password)
-                            user.save()
                             
-                            # Autenticar al usuario recién creado
+                            if created:
+                                user.set_password(password)
+                                user.save()
+                            
+                            # Autenticar al usuario
                             user = authenticate(request, username=username, password=password)
-                            login(request, user)
-                            
-                            messages.success(
-                                request, 
-                                f'¡Bienvenido, {user.first_name or user.username}! Tu cuenta ha sido sincronizada.'
-                            )
-                            
-                            # Guardar tokens
-                            if 'access_token' in response_data:
-                                request.session['api_token'] = response_data['access_token']
-                                request.session['refresh_token'] = response_data.get('refresh_token', '')
-                            
-                            next_url = request.GET.get('next', 'productos:inicio')
-                            return redirect(next_url)
-                            
+                            if user:
+                                login(request, user)
+                                
+                                if 'token' in response_data:
+                                    request.session['api_token'] = response_data['token']
+                                
+                                messages.success(
+                                    request, 
+                                    f'¡Bienvenido, {user.first_name or user.username}!'
+                                )
+                                
+                                next_url = request.GET.get('next', 'productos:inicio')
+                                return redirect(next_url)
                         except Exception as e:
                             form.add_error(None, 'Error al sincronizar usuario. Contacta al administrador.')
-                            
-                elif response.status_code == 400:
-                    # Error en el login
-                    try:
-                        error_data = response.json()
-                        error_message = error_data.get('error', 'Credenciales inválidas')
-                        form.add_error(None, error_message)
-                    except:
+                    else:
                         form.add_error(None, 'Credenciales inválidas. Verifica tu usuario y contraseña.')
-                else:
-                    form.add_error(None, f'Error del servidor: {response.status_code}')
                         
-            except requests.RequestException as e:
-                form.add_error(None, 'Error de conexión con el servidor. Verifica tu conexión a internet.')
+                except requests.RequestException:
+                    form.add_error(None, 'Error de conexión. Verifica tu conexión a internet.')
                 
     else:
         form = UserLoginForm()
@@ -419,9 +432,8 @@ def logout_view(request):
         try:
             requests.post(
                 f"{API_BASE_URL}logout/",
-                json={'refresh_token': request.session.get('refresh_token', '')},
                 headers={
-                    'Authorization': f'Bearer {request.session["api_token"]}',
+                    'Authorization': f'Token {request.session["api_token"]}',
                     'Content-Type': 'application/json'
                 },
                 timeout=5
@@ -431,8 +443,6 @@ def logout_view(request):
         
         # Limpiar tokens de la sesión
         del request.session['api_token']
-        if 'refresh_token' in request.session:
-            del request.session['refresh_token']
     
     # Cerrar sesión en Django
     logout(request)
