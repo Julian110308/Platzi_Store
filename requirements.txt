@@ -9,8 +9,7 @@ requests
 djangorestframework
 
 # Para validación adicional y utilidades
-python-decouple==3.8  # Para variables de entorno
-Pillow==10.1.0  # Si necesitas manejo de imágenes
+Pillow  # Si necesitas manejo de imágenes
 
 # Para instalar las dependencias, ejecutar:
 # pip install -r requirements.txt
